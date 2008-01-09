@@ -1,4 +1,4 @@
-package JabberClient;
+package MockJabberClient;
 
 use strict;
 use warnings;

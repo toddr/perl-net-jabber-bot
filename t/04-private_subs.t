@@ -1,6 +1,6 @@
 #!perl
 
-use Test::More tests => 6;
+use Test::More tests => 8;
 use Net::Jabber::Bot;
 
 use FindBin;
@@ -16,7 +16,8 @@ my %forums_and_responses;
 $forums_and_responses{$config_file_hash{'main'}{'test_forum1'}} = ["jbot:", ""];
 $forums_and_responses{$config_file_hash{'main'}{'test_forum2'}} = ["notjbot:"];
 
-my $client = new JabberClient; # Set this to the test object.
+my $client = new MockJabberClient; # Set this to the test object.
+isa_ok($client, "MockJabberClient");
 
 diag("Server parameters required when client object fed in?!");
 my $bot = Net::Jabber::Bot->new({
@@ -29,6 +30,7 @@ my $bot = Net::Jabber::Bot->new({
 				 , forums_and_responses => \%forums_and_responses
 				 , jabber_client => $client
 });
+isa_ok($bot, "Net::Jabber::Bot");
 
 my @privates = qw(CreateJabberNamespaces
                   InitJabber
