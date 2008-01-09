@@ -1,20 +1,21 @@
 #!perl -T
 
-#use Test::More tests => 1; ok(1); exit; #Disable tests
+# use Test::More tests => 1; ok(1); exit; #Disable tests
 # These tests are in progress...
 use Test::More tests => 118;
-use Config::Std; # Uses read_config to pull info from a config files. enhanced INI format.
 use Net::Jabber::Bot;
 
-#InitLog4Perl();
+# stuff for mock client object
+use FindBin;
+use lib "$FindBin::Bin/lib";
+use MockJabberClient; # Test object
 
-# Load config file.
-my $config_file = 'test_config.cfg';
-my %config_file_hash;
-ok((read_config $config_file => %config_file_hash), "Load config file");
-
+# Setup 
 my $bot_alias = 'make_test_bot';
 my $client_alias = 'bot_test_client';
+my $server = 'talk.google.com';
+my $personal_address = "test_user\@$server/$bot_alias";
+
 my $loop_sleep_time = 5;
 my $server_info_timeout = 5;
 
@@ -29,24 +30,26 @@ my $max_message_size = 800;
 my $long_message_test_messages = 6;
 my $flood_messages_to_send = 40;
 my $max_messages_per_hour = ($flood_messages_to_send*2 
-			     + 2
-			     + $long_message_test_messages
-			     );
+						     + 2
+						     + $long_message_test_messages
+						     );
 
 # Globals we'll keep track of variables we use each test.
 our $messages_seen = 0;
 our $initial_message_count = 0;
 our $start_time = time;
 
-my $personal_address = "$config_file_hash{'main'}{'username'}\@$config_file_hash{'main'}{'server'}/$bot_alias";
 
 ok(1, "Object is about to be created");
+my $client = new MockJabberClient; # Set this to the test object.
+isa_ok($bot, "MockJabberClient");
+
 my $bot = Net::Jabber::Bot->new({
-				 server => $config_file_hash{'main'}{'server'}
-				 , conference_server => $config_file_hash{'main'}{'conference'}
-				 , port => $config_file_hash{'main'}{'port'}
-				 , username => $config_file_hash{'main'}{'username'}
-				 , password => $config_file_hash{'main'}{'password'}
+				 server => $server
+				 , conference_server => "conference.$server"
+				 , port => 5222
+				 , username => 'test_username'
+				 , password => 'test_pass'
 				 , alias => $bot_alias
 				 , message_callback => \&new_bot_message   # Called if new messages arrive.
 				 , background_activity => \&background_checks # What the bot does outside jabber.
@@ -58,13 +61,14 @@ my $bot = Net::Jabber::Bot->new({
 				 , out_messages_per_second => $out_messages_per_second
 				 , max_message_size => $max_message_size
 				 , max_messages_per_hour => $max_messages_per_hour
+				 , jabber_client => $client
 				});
-diag("got return value $result") if(defined $result);
 
-ok(defined $bot, "Bot initialized and connected");
+isa_ok($bot, "Net::Jabber::Bot");
 
 ok(1, "Sleeping 22 seconds to make sure we get past initializtion");
 ok((sleep 22) > 20, "Making sure the bot get's past initialization (sleep 22)");
+# continue editing here. Need to next enhance mock object.
 process_bot_messages();
 
 # Test Group Message bursting is not possible
