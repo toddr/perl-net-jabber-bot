@@ -1,5 +1,8 @@
 Revision history for Net-Jabber-Bot
 
+2.0.3 
+Creation of Mock Client to allow automation of testing.
+
 2.0.2
 Added Log::Log4Perl as dependancy. This should be in everyone's CPAN so it shouldn't be a big deal that people need to install it even though it's not necessary for people to use the module...
 
