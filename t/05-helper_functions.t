@@ -1,3 +1,4 @@
+#!perl
 #!perl -T
 
 # use Test::More tests => 1; ok(1); exit; #Disable tests
@@ -20,8 +21,8 @@ my $loop_sleep_time = 5;
 my $server_info_timeout = 5;
 
 my %forums_and_responses;
-$forums_and_responses{$config_file_hash{'main'}{'test_forum1'}} = ["jbot:", ""];
-$forums_and_responses{$config_file_hash{'main'}{'test_forum2'}} = ["notjbot:"];
+$forums_and_responses{'test_forum1'} = ["jbot:", ""];
+$forums_and_responses{'test_forum2'} = ["notjbot:"];
 
 my $ignore_server_messages = 1;
 my $ignore_self_messages = 1;
@@ -42,7 +43,7 @@ our $start_time = time;
 
 ok(1, "Object is about to be created");
 my $client = new MockJabberClient; # Set this to the test object.
-isa_ok($bot, "MockJabberClient");
+isa_ok($client, "MockJabberClient");
 
 my $bot = Net::Jabber::Bot->new({
 				 server => $server
@@ -68,8 +69,10 @@ isa_ok($bot, "Net::Jabber::Bot");
 
 ok(1, "Sleeping 22 seconds to make sure we get past initializtion");
 ok((sleep 22) > 20, "Making sure the bot get's past initialization (sleep 22)");
-# continue editing here. Need to next enhance mock object.
-process_bot_messages();
+process_bot_messages(); # Clean off the queue before we start?
+
+# continue editing here. Need to next enhance mock object to know jabber bot callbacks.
+# Not sure how we're going to chase chicken/egg issue.
 
 # Test Group Message bursting is not possible
 {
@@ -207,7 +210,6 @@ sub start_new_test {
 
 
 sub process_bot_messages {
-    sleep 2; # Pause a little to make sure message make it to the server and back.
     ok(defined $bot->Process(5), "Processed new messages and didn't lose connection.");
 }
 
