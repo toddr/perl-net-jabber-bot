@@ -1,0 +1,44 @@
+Net-Jabber-Bot
+
+This is the readme on how to install Jabber Bot
+
+Pre-Reqs - 
+Class::Std
+Net::Jabber
+
+INSTALLATION
+
+To install this module, run the following commands:
+
+    perl Makefile.PL
+    make
+    make test
+    make install
+
+
+SUPPORT AND DOCUMENTATION
+
+After installing, you can find documentation for this module with the perldoc command.
+
+    perldoc Net::Jabber::Bot
+
+You can also look for information at:
+
+    Search CPAN
+        http://search.cpan.org/dist/Net-Jabber-Bot
+
+    CPAN Request Tracker:
+        http://rt.cpan.org/NoAuth/Bugs.html?Dist=Net-Jabber-Bot
+
+    AnnoCPAN, annotated CPAN documentation:
+        http://annocpan.org/dist/Net-Jabber-Bot
+
+    CPAN Ratings:
+        http://cpanratings.perl.org/d/Net-Jabber-Bot
+
+COPYRIGHT AND LICENCE
+
+Copyright (C) 2007 Todd E Rinaldo
+
+This program is free software; you can redistribute it and/or modify it
+under the same terms as Perl itself.

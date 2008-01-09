@@ -1,0 +1,22 @@
+Revision history for Net-Jabber-Bot
+
+2.0.2
+Added Log::Log4Perl as dependancy. This should be in everyone's CPAN so it shouldn't be a big deal that people need to install it even though it's not necessary for people to use the module...
+
+2.0.1
+Oops! Guess I need to make this module dependant on Net::Jabber if it's ever going to make test.
+
+2.0.0 
+Move to 3 digit version (see pause.perl.org FAQ about starting with 2 digit version and going to 3)
+internal callback maker created to reduce code.
+
+1.2.1 Call back functions how call self funcion via anonymous subs.
+Minor bug fixes and cleanup.
+
+1.2.0 Re-enabled config test, plus fixed some docs. Versioning changes from here out to be 3 digit. 
+Bot will respond to different addressings per forum (all messages, jbot:, etc.)
+
+1.1 Initial CPAN release - Basic tests built. Still more needed. Some of the limits are hard 
+coded. Arguably, these should be more in a child module, not the base class? 
+
+1.0 Initial pre-CPAN release -- Does basic stuff but no tests yet. not CPAN ready
