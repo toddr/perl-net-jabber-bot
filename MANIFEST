@@ -1,5 +1,6 @@
 Changes
 lib/Net/Jabber/Bot.pm
+examples/bot_example.pl
 Makefile.PL
 MANIFEST
 README
