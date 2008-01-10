@@ -1,11 +1,13 @@
 #!perl
-#!perl -T
 
+use strict;
+use warnings;
 # use Test::More tests => 1; ok(1); exit; #Disable tests
 # These tests are in progress...
 use Test::More tests => 118;
 use Net::Jabber::Bot;
-use Log::Log4perl;
+
+InitLog4Perl();
 
 # stuff for mock client object
 use FindBin;
@@ -22,8 +24,10 @@ my $loop_sleep_time = 5;
 my $server_info_timeout = 5;
 
 my %forums_and_responses;
-$forums_and_responses{'test_forum1'} = ["jbot:", ""];
-$forums_and_responses{'test_forum2'} = ["notjbot:"];
+my $forum1 = 'test_forum1';
+my $forum2 = 'test_forum2';
+$forums_and_responses{$forum1} = ["jbot:", ""];
+$forums_and_responses{$forum2} = ["notjbot:"];
 
 my $ignore_server_messages = 1;
 my $ignore_self_messages = 1;
@@ -64,7 +68,7 @@ my $bot = Net::Jabber::Bot->new({
 
 isa_ok($bot, "Net::Jabber::Bot");
 ok(1, "Sleeping 22 seconds to make sure we get past initializtion");
-#ok((sleep 22) > 20, "Making sure the bot get's past initialization (sleep 22)");
+ok((sleep 22) > 20, "Making sure the bot get's past initialization (sleep 22)");
 process_bot_messages(); # Clean off the queue before we start?
 
 # continue editing here. Need to next enhance mock object to know jabber bot callbacks.
@@ -74,7 +78,7 @@ process_bot_messages(); # Clean off the queue before we start?
 {
     start_new_test(); # Reset all my counter variables.
     for my $counter (1..$flood_messages_to_send) {
-	my $result = $bot->SendGroupMessage($config_file_hash{'main'}{'test_forum1'}, "Testing message speed $counter");
+	my $result = $bot->SendGroupMessage($forum1, "Testing message speed $counter");
 		diag("got return value $result") if(defined $result);
 		ok(!defined $result, "Sent group message $counter");
     }
@@ -143,18 +147,20 @@ cmp_ok(length($long_message), '>=' , $max_message_size , "Length of message is g
 
      # Group Test.
      ok(1, "Sending long message of " . length($long_message) . " bytes to forum");
-     my $result = $bot->SendGroupMessage($config_file_hash{'main'}{'test_forum1'}, $long_message);
+     my $result = $bot->SendGroupMessage($forum1, $long_message);
      diag("got return value $result\nWhile trying to send: $long_message") if(defined $result);
      ok(!defined $result, "Sent long message.");
      process_bot_messages();
      cmp_ok($messages_seen, '>=',$long_message_test_messages, "Saw $long_message_test_messages messages so we know it was chunked into messages smaller than $max_message_size");
 
      start_new_test();
-     my $subject_change_result = $bot->SetForumSubject($config_file_hash{'main'}{'test_forum1'}, $long_message);
+     my $subject_change_result = $bot->SetForumSubject($forum1, $long_message);
      is($subject_change_result, "Subject is too long!", 'Verify long subject changes are rejected.');
      verify_messages_sent(0);
      verify_messages_seen(0, "Bot should not have sent anything to the server.");
 }
+
+DEBUG("Finished with first burst");
 
 # Test a successful message with a panic
 start_new_test();
@@ -206,12 +212,13 @@ sub start_new_test {
 
 
 sub process_bot_messages {
+	DEBUG("Processing bot messages from test file");
     ok(defined $bot->Process(5), "Processed new messages and didn't lose connection.");
 }
 
 sub InitLog4Perl {
-
-    $config_file .= <<'CONFIG_DATA';
+	use Log::Log4perl qw(:easy);
+	my $config_file .= <<'CONFIG_DATA';
 # Regular Screen Appender
 log4perl.appender.Screen           = Log::Log4perl::Appender::Screen
 log4perl.appender.Screen.stderr    = 0
@@ -220,8 +227,6 @@ log4perl.appender.Screen.layout.ConversionPattern = %d %p (%L): %m%n
 log4perl.category = ALL, Screen
 CONFIG_DATA
 
-Log::Log4perl->init(\$config_file);
+	Log::Log4perl->init(\$config_file);
     $| = 1; #unbuffer stdout!
-
-
 }
