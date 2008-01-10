@@ -317,10 +317,8 @@ Sets up the special message handling and then initializes the connection.
 
 sub START {
     my ($self, $obj_ID, $arg_ref) = @_;
-    CreateJabberNamespaces();
-    if(!defined $jabber_client{$obj_ID}) {
-    $self->InitJabber();
-    }
+#    CreateJabberNamespaces(); # Trying to get it to handle version messages.
+   $self->InitJabber();
 }
 
 # Sets up special name space handling.
@@ -344,15 +342,19 @@ sub callback_maker : PRIVATE {
     return sub {return $Function->($self, @_);};
 }
 
-
 # Creates client object and manages connection. Called on new but also called by re-connect
 sub InitJabber : PRIVATE {
     my $self = shift;
     my $obj_ID = $self->_get_obj_id() or return;
 
-    DEBUG("new client object.");
-    my $connection = new Net::Jabber::Client();
-    $jabber_client{$obj_ID} = $connection;
+    # Determine if the object already exists and if not, create it.
+    my $client_exists = 1;
+    DEBUG("new client object."); 
+    if(!defined $jabber_client{$obj_ID}) { # If client was fed in for test?
+        $jabber_client{$obj_ID} = new Net::Jabber::Client();
+        $client_exists = 0;
+    }
+    my $connection = $jabber_client{$obj_ID};
 
     DEBUG("Set the call backs.");
 
@@ -366,8 +368,8 @@ sub InitJabber : PRIVATE {
     my $status = $connection->Connect(hostname=>$connection_hash{$obj_ID}{'server'} , port=>$connection_hash{$obj_ID}{'port'});
 
     if(!defined $status) {
-    ERROR("ERROR:  Jabber server is down or connection was not allowed: $!");
-    return;
+       ERROR("ERROR:  Jabber server is down or connection was not allowed: $!");
+       return;
     }
 
     DEBUG("Logging in... as user $connection_hash{$obj_ID}{'username'}/$connection_hash{$obj_ID}{'alias'}");
@@ -380,7 +382,7 @@ sub InitJabber : PRIVATE {
     foreach my $result (@auth_result) {
         ERROR("$result");
     }
-    return;
+        return;
     }
 
     $connection_session_id{$obj_ID} = $connection->{SESSION}->{id};
@@ -888,10 +890,10 @@ sub SendJabberMessage {
     DEBUG("Max message = $max_size. Splitting...") if($#message_chunks > 0);
     my $return_value;
     foreach my $message_chunk (@message_chunks) {
-    my $msg_return = $self->_SendIndividualMessage($recipient, $message_chunk, $message_type, $subject);
-    if(defined $msg_return) {
-        $return_value .= $msg_return;
-    }
+        my $msg_return = $self->_SendIndividualMessage($recipient, $message_chunk, $message_type, $subject);
+        if(defined $msg_return) {
+            $return_value .= $msg_return;
+        }
     }
     return $return_value;
 }
@@ -957,7 +959,7 @@ sub _SendIndividualMessage : PRIVATE {
     Time::HiRes::sleep $message_delay{$obj_ID}; #Throttle messages.
 
     if($messages_this_hour == $max_messages_per_hour{$obj_ID}) {
-    $jabber_client{$obj_ID}->MessageSend(to => $recipient
+        $jabber_client{$obj_ID}->MessageSend(to => $recipient
                          , body => "Cannot send more messages this hour. "
                          . "$messages_this_hour of $max_messages_per_hour{$obj_ID} already sent."
                          , type => $message_type

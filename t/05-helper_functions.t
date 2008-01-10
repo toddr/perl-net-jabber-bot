@@ -5,6 +5,7 @@
 # These tests are in progress...
 use Test::More tests => 118;
 use Net::Jabber::Bot;
+use Log::Log4perl;
 
 # stuff for mock client object
 use FindBin;
@@ -40,10 +41,7 @@ our $messages_seen = 0;
 our $initial_message_count = 0;
 our $start_time = time;
 
-
-ok(1, "Object is about to be created");
-my $client = new MockJabberClient; # Set this to the test object.
-isa_ok($client, "MockJabberClient");
+ok(1, "Creating Net::Jabber::Bot object with Mock client library asserted in place of Net::Jabber::Client");
 
 my $bot = Net::Jabber::Bot->new({
 				 server => $server
@@ -62,13 +60,11 @@ my $bot = Net::Jabber::Bot->new({
 				 , out_messages_per_second => $out_messages_per_second
 				 , max_message_size => $max_message_size
 				 , max_messages_per_hour => $max_messages_per_hour
-				 , jabber_client => $client
 				});
 
 isa_ok($bot, "Net::Jabber::Bot");
-
 ok(1, "Sleeping 22 seconds to make sure we get past initializtion");
-ok((sleep 22) > 20, "Making sure the bot get's past initialization (sleep 22)");
+#ok((sleep 22) > 20, "Making sure the bot get's past initialization (sleep 22)");
 process_bot_messages(); # Clean off the queue before we start?
 
 # continue editing here. Need to next enhance mock object to know jabber bot callbacks.
@@ -79,8 +75,8 @@ process_bot_messages(); # Clean off the queue before we start?
     start_new_test(); # Reset all my counter variables.
     for my $counter (1..$flood_messages_to_send) {
 	my $result = $bot->SendGroupMessage($config_file_hash{'main'}{'test_forum1'}, "Testing message speed $counter");
-	diag("got return value $result") if(defined $result);
-	ok(!defined $result, "Sent group message $counter");
+		diag("got return value $result") if(defined $result);
+		ok(!defined $result, "Sent group message $counter");
     }
 
      my $running_time = time - $start_time;
