@@ -354,10 +354,10 @@ Bot code to show how to use the bot
 
 =head1 AUTHOR
 
-Todd Rinaldo (perl-net-jabber-bot@googlegroups.com)
+Todd Rinaldo, Robert Boone, Wade Johnson (perl-net-jabber-bot@googlegroups.com)
 
 =head1 BUGS
 
 Send Bug Reports to perl-net-jabber-bot@googlegroups.com
-or submit them at: http://code.google.com/p/perl-net-jabber-bot/issues/list
+or submit them yourself at: http://code.google.com/p/perl-net-jabber-bot/issues/list
 
