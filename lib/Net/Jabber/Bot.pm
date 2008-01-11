@@ -35,11 +35,11 @@ Net::Jabber::Bot - Automated Bot creation with safeties
 
 =head1 VERSION
 
-Version 2.0.4
+Version 2.0.2
 
 =cut
 
-our $VERSION = '2.0.4';
+our $VERSION = '2.0.2';
 
 =head1 SYNOPSIS
 
@@ -54,7 +54,7 @@ All someone should have to know and define in the program away from the object i
 
 =item 1. Config - Where to connect, how often to do things, timers, etc
 
-=item 2. A subroutine to be called by the bot object when a new message comes in.
+=item 2. A subroutine to be called by the bot object when a new message comes in. 
 
 =item 3. A subroutine to be called by the bot object every so often that lets the user do background activities (check logs, monitor web pages, etc.),
 
@@ -68,7 +68,7 @@ The object at present has the following enforced safeties as long as you do not 
 
 =item 2. Limits messages per second, configurable at start up, (Max is 5 per second) by requiring a sleep timer in the message sending subroutine each time one is sent.
 
-=item 3. Endless loops of responding to self prevented by now allowing the bot message processing subroutine to know about messages from self
+=item 3. Endless loops of responding to self prevented by now allowing the bot message processing subroutine to know about messages from self 
 
 =item 4. Forum join grace period to prevent bot from reacting to historical messages
 
@@ -123,7 +123,7 @@ The following initialization variables can be passed. Only marked variables are 
 
     safety_mode = (1,0,'on','off')
 
-Determines if the bot safety features are turned on and enforced. This mode is on by default. Many of the safety features are here to assure you do not crash your favorite jabber server with floods, etc. DO NOT turn it off unless you're sure you know what you're doing (not just Sledge Hammer ceratin)
+Determines if the bot safety features are turned on and enforced. This mode is on by default. Many of the safety features are here to assure you do not crash your favorite jabber server with floods, etc. DO NOT turn it off unless you're sure you know what you're doing (not just Sledge Hammer ceratin) 
 
 =item B<server>
 
@@ -186,7 +186,7 @@ Boolean value as to whether we should ignore messages sent to us from the jabber
 
 =item B<ignore_self_messages>
 
-Boolean value as to whether we should ignore messages sent by us.
+Boolean value as to whether we should ignore messages sent by us. 
 
 BE CAREFUL if you turn this on!!! Turning this on risks potentially endless loops. If you're going to do this, please be sure safety is turned on at least initially.
 
@@ -224,16 +224,14 @@ sub BUILD {
 
     $forum_join_grace{$obj_ID} = 20;
 
-    $jabber_client{$obj_ID} = $arg_ref->{'jabber_client'};
-
     # Safety mode is on unless they feed us 0 or off explicitly
     $safety_mode{$obj_ID} = $arg_ref->{'safety_mode'};
-    if(!defined $safety_mode{$obj_ID}
+    if(!defined $safety_mode{$obj_ID} 
        || $safety_mode{$obj_ID} !~ m/^\s*off\s*$/i
        || $safety_mode{$obj_ID} != 0) {
-    $safety_mode{$obj_ID} = 0;
+	$safety_mode{$obj_ID} = 0;
     } else {
-    $safety_mode{$obj_ID} = 1;
+	$safety_mode{$obj_ID} = 1;
     }
 
     $connection_hash{$obj_ID}{'server'} = $arg_ref->{'server'};
@@ -252,13 +250,13 @@ sub BUILD {
     $bot_background_activity{$obj_ID} = $arg_ref->{'background_activity'};
 
     $loop_sleep_time{$obj_ID} = $arg_ref->{'loop_sleep_time'}
-    or $loop_sleep_time{$obj_ID} = 5;
+	or $loop_sleep_time{$obj_ID} = 5;
 
     $process_timeout{$obj_ID} = $arg_ref->{'process_timeout'}
-    or $process_timeout{$obj_ID} = 5;
+	or $process_timeout{$obj_ID} = 5;
 
     $connection_hash{$obj_ID}{'from_full'} =
-    "$connection_hash{$obj_ID}{'username'}\@$connection_hash{$obj_ID}{'server'}/$connection_hash{$obj_ID}{'alias'}";
+	"$connection_hash{$obj_ID}{'username'}\@$connection_hash{$obj_ID}{'server'}/$connection_hash{$obj_ID}{'alias'}";
 
     $ignore_messages{$obj_ID}{ignore_server_messages} = $arg_ref->{'ignore_server_messages'};
     $ignore_messages{$obj_ID}{ignore_server_messages} = 1 if(!defined $ignore_messages{$obj_ID}{ignore_server_messages});
@@ -269,24 +267,24 @@ sub BUILD {
     $forums_and_responses{$obj_ID} = $arg_ref->{'forums_and_responses'};
 
     my $out_messages_per_second = $arg_ref->{'out_messages_per_second'};
-    $out_messages_per_second = 5
-    if(!defined $out_messages_per_second || $out_messages_per_second <= 0); # Can't be < 0 or undef
+    $out_messages_per_second = 5 
+	if(!defined $out_messages_per_second || $out_messages_per_second <= 0); # Can't be < 0 or undef
 
     $message_delay{$obj_ID} = 1 / $out_messages_per_second;
 
     # Set the maximum chunk size to fed value if it's reasonable.
     if(defined $arg_ref->{'max_message_size'} && $arg_ref->{'max_message_size'} > 100) { # Can't be < 100 (don't be silly)
-    $max_message_size{$obj_ID} = $arg_ref->{'max_message_size'};
+	$max_message_size{$obj_ID} = $arg_ref->{'max_message_size'};
     } else {
-    $max_message_size{$obj_ID} = 1,000,000; # Set it to one meg if not specified.
+	$max_message_size{$obj_ID} = 1,000,000; # Set it to one meg if not specified.
     }
 
     # Set the maximum messages per day limit to fed value if it's within reason
     if(defined $arg_ref->{'max_messages_per_hour'} && $arg_ref->{'max_messages_per_hour'} > 0) { # Must be undef and > 0
-    $max_messages_per_hour{$obj_ID} = $arg_ref->{'max_messages_per_hour'};
+	$max_messages_per_hour{$obj_ID} = $arg_ref->{'max_messages_per_hour'};
     } else {
-    # Set it to a really big number (Safety will catch if you're not dumb enough to disable it.)
-    $max_messages_per_hour{$obj_ID} = 1,000,000;
+	# Set it to a really big number (Safety will catch if you're not dumb enough to disable it.)
+	$max_messages_per_hour{$obj_ID} = 1,000,000;
     }
 
     # Initialize today's message count.
@@ -303,7 +301,7 @@ sub BUILD {
     $max_message_size{$obj_ID} = 1000 if($max_message_size{$obj_ID} > 1000);
 
     # More than 4,000 messages a day is a little excessive.
-    $max_messages_per_hour{$obj_ID} = 125 if($max_message_size{$obj_ID} > 166);
+    $max_messages_per_hour{$obj_ID} = 125 if($max_message_size{$obj_ID} > 166); 
 
     # Should not be responding to self messages to prevent loops.
     $ignore_messages{$obj_ID}{ignore_self_messages} = 1;
@@ -314,24 +312,24 @@ sub BUILD {
 
 Sets up the special message handling and then initializes the connection.
 
-=cut
+=cut 
 
 sub START {
     my ($self, $obj_ID, $arg_ref) = @_;
-#    CreateJabberNamespaces(); # Trying to get it to handle version messages.
-   $self->InitJabber();
+    CreateJabberNamespaces();
+    $self->InitJabber();
 }
 
-# Sets up special name space handling.
+# Sets up special name space handling. 
 sub CreateJabberNamespaces : PRIVATE {
     Net::Jabber::Namespaces::add_ns(  ns => "jabber:iq:version",
-                      tag   => "query",
-                      xpath => {
-                        name       => { type=>'scalar' },
-                        version  => { type=>'scalar' },
-                        os      => { type=>'scalar' },
-                           }
-                   );
+				      tag   => "query",
+				      xpath => {
+						name       => { type=>'scalar' },
+						version  => { type=>'scalar' },
+						os      => { type=>'scalar' },
+					       }
+				   );
 }
 
 # Return a code reference that will pass self in addition to arguements passed to callback code ref.
@@ -343,19 +341,15 @@ sub callback_maker : PRIVATE {
     return sub {return $Function->($self, @_);};
 }
 
+
 # Creates client object and manages connection. Called on new but also called by re-connect
 sub InitJabber : PRIVATE {
     my $self = shift;
     my $obj_ID = $self->_get_obj_id() or return;
 
-    # Determine if the object already exists and if not, create it.
-    my $client_exists = 1;
-    DEBUG("new client object."); 
-    if(!defined $jabber_client{$obj_ID}) { # If client was fed in for test?
-        $jabber_client{$obj_ID} = new Net::Jabber::Client();
-        $client_exists = 0;
-    }
-    my $connection = $jabber_client{$obj_ID};
+    DEBUG("new client object.");
+    my $connection = new Net::Jabber::Client();
+    $jabber_client{$obj_ID} = $connection;
 
     DEBUG("Set the call backs.");
 
@@ -384,21 +378,25 @@ sub InitJabber : PRIVATE {
     }
 
     if(!defined $status) {
-       ERROR("ERROR:  Jabber server is down or connection was not allowed: $!");
-       return;
+	print "ERROR:  Jabber server is down or connection was not allowed: $!\n";
+	return;
     }
 
-    DEBUG("Logging in... as user $connection_hash{$obj_ID}{'username'}/$connection_hash{$obj_ID}{'alias'}");
+    print "Logging in... as user $connection_hash{$obj_ID}{'username'}/$connection_hash{$obj_ID}{'alias'}\n";
+    
+    my $sid = $connection->{SESSION}->{id};
+    $connection->{STREAM}->{SIDS}->{$sid}->{hostname} = 'gmail.com';
+    
     my @auth_result = $connection->AuthSend(username=>$connection_hash{$obj_ID}{'username'},
                                             password=>$connection_hash{$obj_ID}{'password'},
                                             resource=>$connection_hash{$obj_ID}{'alias'});
 
     if(!defined $auth_result[0] || $auth_result[0] ne "ok") {
-    ERROR("ERROR: Authorization failed:");
-    foreach my $result (@auth_result) {
-        ERROR("$result");
-    }
-        return;
+	print "ERROR: Authorization failed:\n";
+	foreach my $result (@auth_result) {
+	    print "$result\n";
+	}
+	return;
     }
 
     $connection_session_id{$obj_ID} = $connection->{SESSION}->{id};
@@ -421,8 +419,8 @@ sub InitJabber : PRIVATE {
 
 =item B<JoinForum>
 
-Joins a jabber forum and sleeps safety time. Also prevents the object
-from responding to messages for a grace period in efforts to get it to
+Joins a jabber forum and sleeps safety time. Also prevents the object 
+from responding to messages for a grace period in efforts to get it to 
 not respond to historical messages. This has failed sometimes.
 
 NOTE: No error detection for join failure is present at the moment. (TODO)
@@ -448,9 +446,9 @@ sub JoinForum {
 
 =item B<Process>
 
-Mostly calls it's client connection's "Process" call.
+Mostly calls it's client connection's "Process" call. 
 Also assures a timeout is enforced if not fed to the subroutine
-You really should not have to call this very often.
+You really should not have to call this very often. 
 You should mostly be calling Start() and just let the Bot kernel handle all this.
 
 =cut
@@ -461,7 +459,7 @@ sub Process { # Call connection process.
     my $timeout_seconds = shift;
 
     #If not passed explicitly
-    $timeout_seconds = $process_timeout{$obj_ID} if(!defined $timeout_seconds);
+    $timeout_seconds = $process_timeout{$obj_ID} if(!defined $timeout_seconds); 
 
     my $process_return = $jabber_client{$obj_ID}->Process($timeout_seconds);
     return $process_return;
@@ -490,28 +488,28 @@ sub Start {
     my $counter = 0; # Keep track of how many times we've looped. Not sure if we'll use this long term.
 
     while(1) { # Loop for ever!
-    # Process and re-connect if you have to.
-    my $reconnect_timeout = 1;
-    while(!defined $self->Process($process_timeout)) {
-        Time::HiRes::sleep $reconnect_timeout++; # Timeout Progressiveley longer.
-        my $message = "Disconnected from $connection_hash{$obj_ID}{'server'}:$connection_hash{$obj_ID}{'port'}"
-        . " as $connection_hash{$obj_ID}{'username'}.";
-        ERROR("$message Reconnecting...");
-        $self->ReconnectToServer();
-        next; # do not allow background to run till you've re-connected.
-    }
+	# Process and re-connect if you have to.
+	my $reconnect_timeout = 1;
+	while(!defined $self->Process($process_timeout)) {
+	    Time::HiRes::sleep $reconnect_timeout++; # Timeout Progressiveley longer.
+	    my $message = "Disconnected from $connection_hash{$obj_ID}{'server'}:$connection_hash{$obj_ID}{'port'}"
+		. " as $connection_hash{$obj_ID}{'username'}."; 
+	    ERROR("$message Reconnecting...");
+	    $self->ReconnectToServer();
+	    next; # do not allow background to run till you've re-connected.
+	}
         # Call background function
-    if(defined $background_subroutine && $last_background + $time_between_background_routines < time) {
-        &$background_subroutine($self, ++$counter);
-        $last_background = time;
-    }
+	if(defined $background_subroutine && $last_background + $time_between_background_routines < time) {
+	    &$background_subroutine($self, ++$counter);
+	    $last_background = time;
+	}
         Time::HiRes::sleep $message_delay;
     }
 }
 
 =item B<ReconnectToServer>
 
-You should not ever need to use this. the Start() kernel usually figures this out and calls it.
+You should not ever need to use this. the Start() kernel usually figures this out and calls it. 
 
 Internal process
 1. Disconnects
@@ -553,7 +551,7 @@ Handles incoming messages ***NEED VERY GOOD DOCUMENTATION HERE***** (TODO)
 
 sub ProcessJabberMessage {
     my $self = shift;
-    DEBUG("ProcessJabberMessage called");
+    DEBUG("Jabber process called");
     my $obj_ID = $self->_get_obj_id() or return;
 
     my $session_id = shift;
@@ -572,6 +570,7 @@ sub ProcessJabberMessage {
     $reply_to =~ s/\/.*$// if($type eq 'groupchat');
 
     # Don't know exactly why but when a message comes from gtalk-web-interface, it works well, but if the message comes from Gtalk client, bot deads
+    my $message_date_text; 
     eval { $message_date_text = $message->GetTimeStamp(); } ;
     #    my $message_date = UnixDate($message_date_text, "%s") - 1*60*60; # Convert to EST from CST;
 
@@ -580,19 +579,19 @@ sub ProcessJabberMessage {
     my $time_now = time;
     if($client_start_time{$obj_ID} > $time_now - $grace_period
        || (defined $forum_join_time{$obj_ID}{$from} && $forum_join_time{$obj_ID}{$from} > $time_now - $grace_period)) {
-    my $cond1 = "$client_start_time{$obj_ID} > $time_now - $grace_period";
-    my $cond2 = "$forum_join_time{$obj_ID}{$from} > $time_now - $grace_period";
-    DEBUG("Ignoring messages cause I'm in startup for forum $from\n"
-          . "$cond1\n"
-          . "$cond2");
+	my $cond1 = "$client_start_time{$obj_ID} > $time_now - $grace_period";
+	my $cond2 = "$forum_join_time{$obj_ID}{$from} > $time_now - $grace_period";
+	DEBUG("Ignoring messages cause I'm in startup for forum $from\n"
+	      . "$cond1\n"
+	      . "$cond2");
         return; # Ignore messages the first few seconds.
     }
 
     # Ignore Group messages with no resource on them. (Server Messages?)
     if($ignore_messages{$obj_ID}{ignore_server_messages}) {
         if($from_full !~ m/^([^\@]+)\@([^\/]+)\/(.+)$/) {
-        DEBUG("Server message? ($from_full) - $message");
-            return if($from_full !~ m/^([^\@]+)\@([^\/]+)\//);
+	    DEBUG("Server message? ($from_full) - $message");
+            return if($from_full !~ m/^([^\@]+)\@([^\/]+)\//); 
             ERROR("Couldn't recognize from_full ($from_full). Ignoring message: $body");
             return;
         }
@@ -600,11 +599,11 @@ sub ProcessJabberMessage {
 
     # Are these my own messages?
     if($ignore_messages{$obj_ID}{ignore_self_messages}) {
-    my $bot_alias = $self->get_alias();
-    if(defined $resource && $bot_alias eq $resource) { # Ignore my own messages.
-        DEBUG("Ignoring message from self...\n");
-        return;
-    }
+	my $bot_alias = $self->get_alias();
+	if(defined $resource && $bot_alias eq $resource) { # Ignore my own messages.
+	    DEBUG("Ignoring message from self...\n");
+	    return;
+	}
     }
 
     # Determine if this message was addressed to me. (groupchat only)
@@ -617,7 +616,7 @@ sub ProcessJabberMessage {
             my $qm_address_type = quotemeta($address_type);
             next if($body !~ m/^\s*$qm_address_type\s*(\S.*)$/);
             $request = $1;
-        $bot_address_from = $address_type;
+	    $bot_address_from = $address_type;
             last; # do not need to loop any more.
         }
         return if(!defined $request);
@@ -625,7 +624,7 @@ sub ProcessJabberMessage {
     }
 
     # Call the message callback if it's defined.
-    if( exists $message_function{$obj_ID} ) {
+    if( exists $message_function{$obj_ID} ) { 
         $message_function{$obj_ID}->(bot_object => $self,
                                      from_full => $from_full,
                                      body => $body,
@@ -669,8 +668,8 @@ sub get_responses {
     my $forum = shift;
 
     if(!defined $forum) {
-    WARN("No forum supplied for get_responses()");
-    return;
+	WARN("No forum supplied for get_responses()");
+	return;
     }
 
     my @aliases_to_respond_to;
@@ -688,11 +687,11 @@ sub Version : PRIVATE {
     my $obj_ID = $self->_get_obj_id() or return;
 
     my $iq = new Net::XMPP::IQ();
-    $iq->SetIQ(to=> 'todd.e.rinaldo@jabber.com/Shiva'
-           , from=> 'jabber.bot@mx-dev.jabber.com/jabber-Bot'
-           , id=>   'jcl_122'
-           , type=> 'get'
-          );
+    $iq->SetIQ(to=> 'todd.e.rinaldo@mx-dev.jpmorgan.com/Shiva'
+	       , from=> 'murex.bot@mx-dev.jpmorgan.com/Murex-Bot'
+	       , id=>   'jcl_122'
+	       , type=> 'get'
+	      );
     my $iqType = $iq->NewChild( 'jabber:iq:version' );
     DEBUG("Sending IQ Message:" . $iq->GetXML());
     $jabber_client{$obj_ID}->Send($iq)
@@ -700,7 +699,7 @@ sub Version : PRIVATE {
 
 =item B<InIQ> - DO NOT CALL
 
-Called when the client receives new messages during Process of this type.
+Called when the client receives new messages during Process of this type. 
 
 =cut
 
@@ -719,14 +718,14 @@ sub InIQ {
     my $iqReply;
 
     if($xmlns eq "jabber:iq:version") {
-    return;
-    $iqReply = new Net::XMPP::IQ();
-    my $iqType = $iqReply->NewChild( 'jabber:iq:version' );
-    $iqType->Setname("test");
-    #    $iqReply->Set("name", "Perl");
-    DEBUG("version");
+	return;
+	$iqReply = new Net::XMPP::IQ();
+	my $iqType = $iqReply->NewChild( 'jabber:iq:version' );
+	$iqType->Setname("test");
+	#    $iqReply->Set("name", "Perl");
+	DEBUG("version");
     } else {
-    return;
+	return;
     }
 
     DEBUG("Reply: ", $iqReply->GetXML());
@@ -742,10 +741,10 @@ sub InIQ {
 
 =item B<JabberPresenceMessage> - DO NOT CALL
 
-Called when the client receives new presence messages during Process.
+Called when the client receives new presence messages during Process. 
 Mostly we are just pushing the data down into the client DB for later processing.
 
-=cut
+=cut 
 
 sub JabberPresenceMessage {
     my $self = shift;
@@ -758,7 +757,7 @@ sub JabberPresenceMessage {
     if($type eq 'subscribe') { # Always allow people to subscribe to us. Why wouldn't we?
         my $from = $presence->GetFrom();
         $jabber_client{$obj_ID}->Subscription(type=>"subscribed",
-                                              to=>$from);
+                          				      to=>$from);
         INFO("Processed subscription request from $from");
         return;
     } elsif($type eq 'unsubscribe') { # Always allow people to subscribe to us. Why wouldn't we?
@@ -833,11 +832,11 @@ sub get_safety_mode {
 
     # Must be in safety mode and all thresholds met.
     my $mode = !!($safety_mode{$obj_ID}
-          && $message_delay{$obj_ID} >= 1/5
-          && $max_message_size{$obj_ID} <= 1000
-          && $max_message_size{$obj_ID} <= 166
-          && $ignore_messages{$obj_ID}{ignore_self_messages}
-         );
+		  && $message_delay{$obj_ID} >= 1/5
+		  && $max_message_size{$obj_ID} <= 1000
+		  && $max_message_size{$obj_ID} <= 166
+		  && $ignore_messages{$obj_ID}{ignore_self_messages}
+		 );
     return $mode;
 }
 
@@ -871,8 +870,8 @@ $recipient must read as user@server/Resource or it will not send.
 =cut
 
     sub SendPersonalMessage {
-    my $self = shift;
-    my $recipient = shift;
+	my $self = shift;
+	my $recipient = shift;
     my $message = shift;
 
     return $self->SendJabberMessage($recipient, $message, 'chat');
@@ -901,16 +900,16 @@ sub SendJabberMessage {
 
     # Split the message into no more than max_message_size so that we do not piss off jabber.
     # Split on new line. Space if you have to or just chop at max size.
-    my @message_chunks = ( $message =~ /.{1,$max_size}$|.{1,$max_size}\n|.{1,$max_size}\s|.{1,$max_size}/gs );
+    my @message_chunks = ( $message =~ /.{1,$max_size}$|.{1,$max_size}\n|.{1,$max_size}\s|.{1,$max_size}/gs ); 
 
 
     DEBUG("Max message = $max_size. Splitting...") if($#message_chunks > 0);
     my $return_value;
     foreach my $message_chunk (@message_chunks) {
-        my $msg_return = $self->_SendIndividualMessage($recipient, $message_chunk, $message_type, $subject);
-        if(defined $msg_return) {
-            $return_value .= $msg_return;
-        }
+	my $msg_return = $self->_SendIndividualMessage($recipient, $message_chunk, $message_type, $subject);
+	if(defined $msg_return) {
+	    $return_value .= $msg_return;
+	}
     }
     return $return_value;
 }
@@ -925,7 +924,7 @@ sub SendJabberMessage {
 sub _SendIndividualMessage : PRIVATE {
     my $self = shift;
     my $obj_ID = $self->_get_obj_id() or return "Not an object\n"; #Failure
-
+    
     my $recipient = shift;
     my $message_chunk = shift;
     my $message_type = shift;
@@ -940,11 +939,11 @@ sub _SendIndividualMessage : PRIVATE {
     ERROR('$recipient not defined!');
     return "No recipient!\n";
     }
-
+    
     my $yday = (localtime)[7];
     my $hour = (localtime)[2];
     my $messages_this_hour = ++$messages_sent_today{$obj_ID}{$yday}{$hour};
-
+    
     if($messages_this_hour > $max_messages_per_hour{$obj_ID}) {
     $subject = "" if(!defined $subject); # Keep warning messages quiet.
     $message_chunk = "" if(!defined $message_chunk); # Keep warning messages quiet.
@@ -956,7 +955,7 @@ sub _SendIndividualMessage : PRIVATE {
           . "Message sent:\n"
           . "$message_chunk"
           );
-
+    
     # Send 1 panic message out to jabber if this is our last message before quieting down.
     return "Too many messages ($messages_this_hour)\n";
     }
@@ -975,8 +974,8 @@ sub _SendIndividualMessage : PRIVATE {
     DEBUG("Sleeping $message_delay{$obj_ID} after sending message.");
     Time::HiRes::sleep $message_delay{$obj_ID}; #Throttle messages.
 
-    if($messages_this_hour == $max_messages_per_hour{$obj_ID}) {
-        $jabber_client{$obj_ID}->MessageSend(to => $recipient
+    if($messages_this_hour == $max_messages_per_hour{$obj_ID}) { 
+    $jabber_client{$obj_ID}->MessageSend(to => $recipient
                          , body => "Cannot send more messages this hour. "
                          . "$messages_this_hour of $max_messages_per_hour{$obj_ID} already sent."
                          , type => $message_type
@@ -1001,11 +1000,11 @@ sub SetForumSubject {
     my $subject = shift;
 
     if(length $subject > $max_message_size{$obj_ID}) {
-    my $subject_len = length($subject);
-    ERROR("Someone tried to send a subject message $subject_len bytes long!");
-    my $subject = substr($subject, 0, $max_message_size{$obj_ID});
-    DEBUG("Truncated subject: $subject");
-    return "Subject is too long!";
+	my $subject_len = length($subject);
+	ERROR("Someone tried to send a subject message $subject_len bytes long!");
+	my $subject = substr($subject, 0, $max_message_size{$obj_ID});
+	DEBUG("Truncated subject: $subject");
+	return "Subject is too long!";
     }
     $self->_SendIndividualMessage($recipient, "Setting subject to $subject", 'groupchat', $subject);
 
@@ -1036,13 +1035,13 @@ sub _get_obj_id : PRIVATE {
 
 =head1 AUTHOR
 
-Todd Rinaldo, Robert Boone, Wade Johnson C<< <perl-net-jabber-bot@googlegroups.com) > >>
+Todd E Rinaldo, C<< <todd.e.rinaldo at jpmorgan.com> >>
 
 =head1 BUGS
 
 Please report any bugs or feature requests to
-C<perl-net-jabber-bot@googlegroups.com>, or through the web interface at
-L<http://code.google.com/p/perl-net-jabber-bot/issues/entry>.
+C<bug-net-jabber-bot at rt.cpan.org>, or through the web interface at
+L<http://rt.cpan.org/NoAuth/ReportBug.html?Queue=Net-Jabber-Bot>.
 I will be notified, and then you'll automatically be notified of progress on
 your bug as I make changes.
 
@@ -1064,17 +1063,13 @@ L<http://annocpan.org/dist/Net-Jabber-Bot>
 
 L<http://cpanratings.perl.org/d/Net-Jabber-Bot>
 
+=item * RT: CPAN's request tracker
+
+L<http://rt.cpan.org/NoAuth/Bugs.html?Dist=Net-Jabber-Bot>
+
 =item * Search CPAN
 
 L<http://search.cpan.org/dist/Net-Jabber-Bot>
-
-=item * Project homepage
-
-L<http://code.google.com/p/perl-net-jabber-bot/>
-
-=item * Google Issue Tracker (reporting bugs)
-
-L<http://code.google.com/p/perl-net-jabber-bot/issues/entry>
 
 =back
 
