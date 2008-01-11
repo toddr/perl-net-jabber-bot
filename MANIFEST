@@ -12,4 +12,4 @@ t/06-test_safeties.t
 t/99-pod-coverage.t
 t/99-pod.t
 t/lib/MockJabberClient.pm
-t/lib/MockJabberClient/Message.pm
+

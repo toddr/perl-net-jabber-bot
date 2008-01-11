@@ -2,6 +2,8 @@ package Net::Jabber::Client;
 
 use strict;
 use warnings;
+use Net::Jabber;
+use Log::Log4perl qw(:easy);
 
 # NOTE: Need to inherit from Jabber bot object so we don't have to re-do message code, etc.
 
@@ -20,6 +22,12 @@ sub new {
     $self->{presence_callback} = undef;
     $self->{iq_callback}       = undef;
     $self->{message_callback}  = undef;
+
+    $self->{server} = undef;
+    $self->{username} = undef;
+    $self->{password} = undef;
+    $self->{resource} = undef;
+
     return $self;
 }
 
@@ -33,8 +41,11 @@ sub Process {
     foreach my $message (@{$self->{message_queue}}) {
         $timeout = 0; # zero out sleep timer;
         next if(!defined $self->{message_callback});
-        $self->{message_callback}->($message, $self->{SESSION}->{id});
+        $self->{message_callback}->($self->{SESSION}->{id}, $message);
     }
+    
+    
+    @{$self->{message_queue}} = ();
 
     sleep $timeout;
     return 1; # undef means we lost connection.
@@ -53,17 +64,46 @@ sub SetCallBacks {
 }
 
 sub Connect {
+    my $self = shift;
+    
+    $self->{server} = shift;
     return 1; # Always confirm we're connected.
 }
 
 sub AuthSend {
+    my $self = shift;
+
+    my %arg_hash = @_;
+    $self->{'username'} = $arg_hash{'username'};
+    $self->{'password'} = $arg_hash{'password'};
+    $self->{'resource'} = $arg_hash{'resource'};
+    
     return ("ok", "connected"); # Always confirm auth succeeds.
 }
 
-sub MessageSend {
+sub MessageSend { #Loop the messages into the in queue so we can see the server send em back. Needs peer review
     my $self = shift;
     my %arg_hash = @_;
-    push @{$self->{message_queue}}, \%arg_hash;
+    my $message = new Net::Jabber::Message();
+    
+    my $sent_to = $arg_hash{'to'};
+    
+    my ($forum, $server) = split(/\@/, $sent_to, 2);
+    $server =~ s{\/.*$}{}; # Remove the /resource if it came from an individual, not a groupchat
+    
+    my $from = "$forum\@$server/$self->{resource}";
+    my $to   = "$self->{username}\@$self->{server}/$self->{resource}";
+    DEBUG("$sent_to --- $from --- $to");
+    
+    $message->SetFrom($from);
+    $message->SetTo($to);
+    $message->SetType($arg_hash{'type'});
+    $message->SetSubject($arg_hash{'subject'});
+    $message->SetBody($arg_hash{'body'});
+    
+#    ERROR($message->GetXML()); exit;
+
+    push @{$self->{message_queue}}, $message;
 }
 
 sub MUCJoin {; }

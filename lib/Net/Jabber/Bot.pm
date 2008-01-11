@@ -537,7 +537,7 @@ Handles incoming messages ***NEED VERY GOOD DOCUMENTATION HERE***** (TODO)
 
 sub ProcessJabberMessage {
     my $self = shift;
-    DEBUG("Jabber process called");
+    DEBUG("ProcessJabberMessage called");
     my $obj_ID = $self->_get_obj_id() or return;
 
     my $session_id = shift;

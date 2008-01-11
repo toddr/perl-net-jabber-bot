@@ -2,12 +2,10 @@
 
 use strict;
 use warnings;
-# use Test::More tests => 1; ok(1); exit; #Disable tests
-# These tests are in progress...
-use Test::More tests => 118;
+use Test::More tests => 120;
 use Net::Jabber::Bot;
 
-InitLog4Perl();
+#InitLog4Perl();
 
 # stuff for mock client object
 use FindBin;
@@ -68,13 +66,13 @@ my $bot = Net::Jabber::Bot->new({
 
 isa_ok($bot, "Net::Jabber::Bot");
 ok(1, "Sleeping 22 seconds to make sure we get past initializtion");
-ok((sleep 22) > 20, "Making sure the bot get's past initialization (sleep 22)");
+ok((sleep 22) > 20, "Making sure the bot get's past login initialization (sleep 22)");
 process_bot_messages(); # Clean off the queue before we start?
 
 # continue editing here. Need to next enhance mock object to know jabber bot callbacks.
 # Not sure how we're going to chase chicken/egg issue.
 
-# Test Group Message bursting is not possible
+ok(1, "Testing Group Message bursting is not possible");
 {
     start_new_test(); # Reset all my counter variables.
     for my $counter (1..$flood_messages_to_send) {
@@ -93,7 +91,7 @@ process_bot_messages(); # Clean off the queue before we start?
 }
 
 
-# Test PERSONAL_ADDRESS Message bursting is not possible
+ok(1, "Testing PERSONAL_ADDRESS Message bursting is not possible");
  {
      start_new_test();
      for my $counter (1..$flood_messages_to_send) {
@@ -140,7 +138,7 @@ my $long_message_length = length $long_message;
 cmp_ok(length($long_message), '>=' , $max_message_size , "Length of message is greater than 1 message chunk ($long_message_length bytes)");
 
 
-# Test messages that will be split:
+ok(1, "Testing messages that will be split:");
 {
      start_new_test();
      cmp_ok($bot->respond_to_self_messages( ), '==', 1, "Make sure I'm responding to self messages.");
@@ -212,7 +210,7 @@ sub start_new_test {
 
 
 sub process_bot_messages {
-	DEBUG("Processing bot messages from test file");
+	DEBUG("Processing bot messages from test file ($0)");
     ok(defined $bot->Process(5), "Processed new messages and didn't lose connection.");
 }
 
