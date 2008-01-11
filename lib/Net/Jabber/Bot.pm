@@ -237,6 +237,7 @@ sub BUILD {
     }
 
     $connection_hash{$obj_ID}{'server'} = $arg_ref->{'server'};
+    $connection_hash{$obj_ID}{'gtalk'} = $arg_ref->{'gtalk'};
     $connection_hash{$obj_ID}{'conference_server'} = $arg_ref->{'conference_server'};
 
     $connection_hash{$obj_ID}{'port'} = $arg_ref->{'port'};
@@ -365,7 +366,22 @@ sub InitJabber : PRIVATE {
                               );
 
     DEBUG("Connect. hostname => $connection_hash{$obj_ID}{'server'} , port => $connection_hash{$obj_ID}{'port'}");
-    my $status = $connection->Connect(hostname=>$connection_hash{$obj_ID}{'server'} , port=>$connection_hash{$obj_ID}{'port'});
+    
+    # If you put gtalk => 1 on Net::Jabber::Bot->new use gtalk login procedure, if not, use the normal jabber login
+    
+    my $status;
+    
+    if ($connection_hash{$obj_ID}{'gtalk'} == 1) { 
+    
+        $status = $connection->Connect(hostname=>$connection_hash{$obj_ID}{'server'} , port=>$connection_hash{$obj_ID}{'port'}, connectiontype =>'tcpip', tls => '1', componentname => 'gmail.com');
+        
+    }
+    
+    else {
+        
+        $status = $connection->Connect(hostname=>$connection_hash{$obj_ID}{'server'} , port=>$connection_hash{$obj_ID}{'port'});
+        
+    }
 
     if(!defined $status) {
        ERROR("ERROR:  Jabber server is down or connection was not allowed: $!");
@@ -555,7 +571,8 @@ sub ProcessJabberMessage {
     my $reply_to = $from_full;
     $reply_to =~ s/\/.*$// if($type eq 'groupchat');
 
-    my $message_date_text = $message->GetTimeStamp();
+    # Don't know exactly why but when a message comes from gtalk-web-interface, it works well, but if the message comes from Gtalk client, bot deads
+    eval { $message_date_text = $message->GetTimeStamp(); } ;
     #    my $message_date = UnixDate($message_date_text, "%s") - 1*60*60; # Convert to EST from CST;
 
     # Ignore any messages within 20 seconds of start or join of that forum
