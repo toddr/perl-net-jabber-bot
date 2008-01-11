@@ -35,11 +35,11 @@ Net::Jabber::Bot - Automated Bot creation with safeties
 
 =head1 VERSION
 
-Version 2.0.3
+Version 2.0.4
 
 =cut
 
-our $VERSION = '2.0.3';
+our $VERSION = '2.0.4';
 
 =head1 SYNOPSIS
 
@@ -671,8 +671,8 @@ sub Version : PRIVATE {
     my $obj_ID = $self->_get_obj_id() or return;
 
     my $iq = new Net::XMPP::IQ();
-    $iq->SetIQ(to=> 'todd.e.rinaldo@mx-dev.jpmorgan.com/Shiva'
-           , from=> 'murex.bot@mx-dev.jpmorgan.com/Murex-Bot'
+    $iq->SetIQ(to=> 'todd.e.rinaldo@jabber.com/Shiva'
+           , from=> 'jabber.bot@mx-dev.jabber.com/jabber-Bot'
            , id=>   'jcl_122'
            , type=> 'get'
           );
@@ -1019,13 +1019,13 @@ sub _get_obj_id : PRIVATE {
 
 =head1 AUTHOR
 
-Todd E Rinaldo, C<< <todd.e.rinaldo at jpmorgan.com> >>
+Todd Rinaldo, Robert Boone, Wade Johnson C<< <perl-net-jabber-bot@googlegroups.com) > >>
 
 =head1 BUGS
 
 Please report any bugs or feature requests to
-C<bug-net-jabber-bot at rt.cpan.org>, or through the web interface at
-L<http://rt.cpan.org/NoAuth/ReportBug.html?Queue=Net-Jabber-Bot>.
+C<perl-net-jabber-bot@googlegroups.com>, or through the web interface at
+L<http://code.google.com/p/perl-net-jabber-bot/issues/entry>.
 I will be notified, and then you'll automatically be notified of progress on
 your bug as I make changes.
 
@@ -1047,13 +1047,17 @@ L<http://annocpan.org/dist/Net-Jabber-Bot>
 
 L<http://cpanratings.perl.org/d/Net-Jabber-Bot>
 
-=item * RT: CPAN's request tracker
-
-L<http://rt.cpan.org/NoAuth/Bugs.html?Dist=Net-Jabber-Bot>
-
 =item * Search CPAN
 
 L<http://search.cpan.org/dist/Net-Jabber-Bot>
+
+=item * Project homepage
+
+L<http://code.google.com/p/perl-net-jabber-bot/>
+
+=item * Google Issue Tracker (reporting bugs)
+
+L<http://code.google.com/p/perl-net-jabber-bot/issues/entry>
 
 =back
 

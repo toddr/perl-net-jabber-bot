@@ -4,7 +4,7 @@ use ExtUtils::MakeMaker;
 
 WriteMakefile(
     NAME                => 'Net::Jabber::Bot',
-    AUTHOR              => 'Todd E Rinaldo <todd.e.rinaldo@jpmorgan.com>',
+    AUTHOR              => 'Todd E Rinaldo <perl-net-jabber-bot@googlegroups.com>',
     VERSION_FROM        => 'lib/Net/Jabber/Bot.pm',
     ABSTRACT_FROM       => 'lib/Net/Jabber/Bot.pm',
     PL_FILES            => {},

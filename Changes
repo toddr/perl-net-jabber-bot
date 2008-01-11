@@ -1,5 +1,10 @@
 Revision history for Net-Jabber-Bot
 
+2.0.4 
+Removed some email addresses present. 
+Tidy up manifest
+Referring to google project in POD now.
+
 2.0.3
 Creation of Mock Client to allow automation of testing without a server.
 Also added Example script so someone can see how to use the module.

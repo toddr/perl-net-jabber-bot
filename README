@@ -27,14 +27,17 @@ You can also look for information at:
     Search CPAN
         http://search.cpan.org/dist/Net-Jabber-Bot
 
-    CPAN Request Tracker:
-        http://rt.cpan.org/NoAuth/Bugs.html?Dist=Net-Jabber-Bot
-
     AnnoCPAN, annotated CPAN documentation:
         http://annocpan.org/dist/Net-Jabber-Bot
 
     CPAN Ratings:
         http://cpanratings.perl.org/d/Net-Jabber-Bot
+
+    Google Request Tracker:
+        http://code.google.com/p/perl-net-jabber-bot/issues/entry
+
+    Google SVN Repository:
+        http://code.google.com/p/perl-net-jabber-bot
 
 COPYRIGHT AND LICENCE
 
