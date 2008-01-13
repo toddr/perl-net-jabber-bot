@@ -11,6 +11,8 @@ use FindBin;
 use lib "$FindBin::Bin/lib";
 use MockJabberClient; # Test object
 
+#InitLog4Perl(); # Use to debug test cases. Off normally.
+
 my $alias = 'make_test_bot';
 my $loop_sleep_time = 5;
 my $server_info_timeout = 5;
@@ -28,9 +30,9 @@ my $bot = Net::Jabber::Bot->new({
                                  , port => 'port_not_used'
                                  , username => 'username_not_used'
                                  , password => 'password_not_used'
-				 , alias => $alias
-				 , forums_and_responses => \%forums_and_responses
-});
+								 , alias => $alias
+								 , forums_and_responses => \%forums_and_responses
+								});
 isa_ok($bot, "Net::Jabber::Bot");
 
 my @privates = qw(CreateJabberNamespaces
@@ -45,4 +47,21 @@ foreach my $private_module (@privates) {
     my $call = "\$bot->$private_module()";
     eval $call;
     ok($@ =~ m/Can\'t call private method /, "Verify private sub $call can not be executed outside class"); # Expect this subroutine to fail...
+}
+
+sub InitLog4Perl {
+	use Log::Log4perl qw(:easy);
+    my $config_file .= <<'CONFIG_DATA';
+# Regular Screen Appender
+log4perl.appender.Screen           = Log::Log4perl::Appender::Screen
+log4perl.appender.Screen.stderr    = 0
+log4perl.appender.Screen.layout    = PatternLayout
+log4perl.appender.Screen.layout.ConversionPattern = %d %p (%L): %m%n
+log4perl.category = ALL, Screen
+CONFIG_DATA
+
+Log::Log4perl->init(\$config_file);
+    $| = 1; #unbuffer stdout!
+
+
 }
