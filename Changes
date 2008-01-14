@@ -1,5 +1,8 @@
 Revision history for Net-Jabber-Bot
 
+2.0.5
+Missed a test file mentioning IO::Prompt (t/03)
+
 2.0.4
 Removed some email addresses present.
 Tidy up manifest

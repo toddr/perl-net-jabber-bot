@@ -1,8 +1,6 @@
 #!perl -T
 
 use Test::More tests => 6;
-use IO::Prompt;
-use Config::Std; # Uses read_config to pull info from a config files. enhanced INI format.
 use Net::Jabber::Bot;
 use Log::Log4perl qw(:easy);
 

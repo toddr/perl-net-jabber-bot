@@ -35,11 +35,11 @@ Net::Jabber::Bot - Automated Bot creation with safeties
 
 =head1 VERSION
 
-Version 2.0.4
+Version 2.0.5
 
 =cut
 
-our $VERSION = '2.0.4';
+our $VERSION = '2.0.5';
 
 =head1 SYNOPSIS
 
@@ -237,7 +237,7 @@ sub BUILD {
     $connection_hash{$obj_ID}{'server'} = $arg_ref->{'server'};
     $connection_hash{$obj_ID}{'conference_server'} = $arg_ref->{'conference_server'};
     $connection_hash{$obj_ID}{'gtalk'} = $arg_ref->{'gtalk'};
-    
+
 
     $connection_hash{$obj_ID}{'port'} = $arg_ref->{'port'};
     $connection_hash{$obj_ID}{'port'} = 5222 if(!defined $connection_hash{$obj_ID}{'port'});
@@ -246,7 +246,7 @@ sub BUILD {
     $connection_hash{$obj_ID}{'password'} = $arg_ref->{'password'};
 
     $connection_hash{$obj_ID}{'alias'} = $arg_ref->{'alias'}
-    or $connection_hash{$obj_ID}{'alias'} = 'net_jabber_bot';    
+    or $connection_hash{$obj_ID}{'alias'} = 'net_jabber_bot';
 
     $message_function{$obj_ID} = $arg_ref->{'message_callback'};
     $bot_background_activity{$obj_ID} = $arg_ref->{'background_activity'};
@@ -350,7 +350,7 @@ sub InitJabber : PRIVATE {
 
     # Determine if the object already exists and if not, create it.
     my $client_exists = 1;
-    DEBUG("new client object."); 
+    DEBUG("new client object.");
     if(!defined $jabber_client{$obj_ID}) { # If client was fed in for test?
         $jabber_client{$obj_ID} = new Net::Jabber::Client();
         $client_exists = 0;
@@ -369,15 +369,15 @@ sub InitJabber : PRIVATE {
     my %client_connect_hash;
     $client_connect_hash{hostname} = $connection_hash{$obj_ID}{'server'};
     $client_connect_hash{port}     = $connection_hash{$obj_ID}{'port'};
- 
+
     if ($connection_hash{$obj_ID}{'gtalk'}) { # Set additional parameters for gtalk connection. Will this work with all Jabber servers?
         $client_connect_hash{connectiontype} = 'tcpip';
         $client_connect_hash{tls} = '1';
         $client_connect_hash{componentname} = 'gmail.com';
     }
-    
+
     my $status = $connection->Connect(%client_connect_hash);
-    
+
     if(!defined $status) {
        ERROR("ERROR:  Jabber server is down or connection was not allowed: $!");
        return;
