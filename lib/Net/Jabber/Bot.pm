@@ -384,6 +384,14 @@ sub InitJabber : PRIVATE {
     }
 
     DEBUG("Logging in... as user $connection_hash{$obj_ID}{'username'} / $connection_hash{$obj_ID}{'alias'}");
+    
+    if ($connection_hash{$obj_ID}{'gtalk'}) {
+        
+         my $sid = $connection->{SESSION}->{id};
+        $connection->{STREAM}->{SIDS}->{$sid}->{hostname} = 'gmail.com';
+        
+    }
+    
     my @auth_result = $connection->AuthSend(username=>$connection_hash{$obj_ID}{'username'},
                                             password=>$connection_hash{$obj_ID}{'password'},
                                             resource=>$connection_hash{$obj_ID}{'alias'});
