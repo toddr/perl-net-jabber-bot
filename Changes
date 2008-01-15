@@ -1,5 +1,8 @@
 Revision history for Net-Jabber-Bot
 
+2.0.6
+Test::Pod::Coverage not configured to skip tests if not avail. Corrected this.
+
 2.0.5
 Missed a test file mentioning IO::Prompt (t/03)
 
