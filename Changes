@@ -1,5 +1,10 @@
 Revision history for Net-Jabber-Bot
 
+2.0.7
+Fix to get gtalk working, kindly provided by Yago Jesus. It's doing something really funky with setting the hostname to gmail.com.
+Need to later review why we're doing this. maybe we're ignorning connect messages from the server?
+Also added gtalk bot example courtesy of Yago
+
 2.0.6
 Test::Pod::Coverage not configured to skip tests if not avail. Corrected this.
 

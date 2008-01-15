@@ -35,11 +35,11 @@ Net::Jabber::Bot - Automated Bot creation with safeties
 
 =head1 VERSION
 
-Version 2.0.6
+Version 2.0.7
 
 =cut
 
-our $VERSION = '2.0.6';
+our $VERSION = '2.0.7';
 
 =head1 SYNOPSIS
 
@@ -384,14 +384,14 @@ sub InitJabber : PRIVATE {
     }
 
     DEBUG("Logging in... as user $connection_hash{$obj_ID}{'username'} / $connection_hash{$obj_ID}{'alias'}");
-    
+
     if ($connection_hash{$obj_ID}{'gtalk'}) {
-        
+
          my $sid = $connection->{SESSION}->{id};
         $connection->{STREAM}->{SIDS}->{$sid}->{hostname} = 'gmail.com';
-        
+
     }
-    
+
     my @auth_result = $connection->AuthSend(username=>$connection_hash{$obj_ID}{'username'},
                                             password=>$connection_hash{$obj_ID}{'password'},
                                             resource=>$connection_hash{$obj_ID}{'alias'});
