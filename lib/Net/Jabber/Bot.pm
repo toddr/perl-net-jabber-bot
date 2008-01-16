@@ -110,6 +110,7 @@ if you do not export anything, such as for a purely object-oriented module.
                                 , out_messages_per_second => 4
                                 , max_message_size => 1000
                                 , max_messages_per_hour => 100
+                                , gtalk => 0 # Default to off, 1 for on. needed now due to gtalk differences from std jabber server.
                             });
 
 
