@@ -361,6 +361,7 @@ sub InitJabber : PRIVATE {
     DEBUG("Set the call backs.");
 
     $connection->PresenceDB(); # Init presence DB.
+    $connection->RosterDB(); # Init Roster DB.
     $connection->SetCallBacks( 'message'  => $self->callback_maker(\&ProcessJabberMessage)
                               ,'presence' => $self->callback_maker(\&JabberPresenceMessage)
                               ,'iq'       => $self->callback_maker(\&InIQ)
@@ -370,7 +371,7 @@ sub InitJabber : PRIVATE {
     my %client_connect_hash;
     $client_connect_hash{hostname} = $connection_hash{$obj_ID}{'server'};
     $client_connect_hash{port}     = $connection_hash{$obj_ID}{'port'};
-
+    
     if ($connection_hash{$obj_ID}{'gtalk'}) { # Set additional parameters for gtalk connection. Will this work with all Jabber servers?
         $client_connect_hash{connectiontype} = 'tcpip';
         $client_connect_hash{tls} = '1';
@@ -404,7 +405,9 @@ sub InitJabber : PRIVATE {
     }
         return;
     }
-
+    
+    $connection->RosterRequest();
+    
     $connection_session_id{$obj_ID} = $connection->{SESSION}->{id};
 
     DEBUG("Sending presence to tell world that we are logged in");
@@ -1037,6 +1040,39 @@ sub _get_obj_id : PRIVATE {
     ERROR("$package called at line $line_caller in $filename_caller without a valid object!!");
     return;
 }
+
+sub ChangeStatus {
+    my $self = shift;
+    my $obj_ID = $self->_get_obj_id() or return "Not an object\n"; #Failure
+    my $string = shift;
+    my $mode = shift ;
+    
+    my $presender= $jabber_client{$obj_ID};
+    
+    $presender->PresenceSend(status=>"$string", show=>"$mode");
+    
+    return;
+}
+
+sub GetmyRoster {
+    my $self = shift;
+    my $obj_ID = $self->_get_obj_id() or return "Not an object\n"; #Failure
+    
+    my @rosterlistraw;
+    my @rosterlist;
+    
+    @rosterlistraw = $jabber_client{$obj_ID}->RosterDBJIDs();
+    
+    foreach(@rosterlistraw) {
+        
+        my $username =$_->GetJID();
+        
+        push(@rosterlist, $username) ;
+        
+    }
+    
+    return(@rosterlist);
+}    
 
 =back
 
