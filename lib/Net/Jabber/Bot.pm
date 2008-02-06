@@ -1041,44 +1041,53 @@ sub _get_obj_id : PRIVATE {
     return;
 }
 
+=item B<ChangeStatus>
+
+    $bot->ChangeStatus($presence_mode, $status_string);
+
+Sets the Bot's presence status.
+$presence mode could be something like: (Chat, Available, Away, Ext. Away, Do Not Disturb).
+$status_string is an optional comment to go with your presence mode. It is not required.
+
+=cut
+
 sub ChangeStatus {
     my $self = shift;
     my $obj_ID = $self->_get_obj_id() or return "Not an object\n"; #Failure
-    my $string = shift;
-    my $mode = shift ;
+    my $presence_mode = shift;
+    my $status_string = shift; # (optional)
     
-    my $presender= $jabber_client{$obj_ID};
+    $jabber_client{$obj_ID}->PresenceSend(show=>$presence_mode, status=>$status_string);
     
-    $presender->PresenceSend(status=>"$string", show=>"$mode");
-    
-    return;
+    return 1;
 }
 
-sub GetmyRoster {
+=item B<GetRoster>
+
+    $bot->GetRoster();
+
+Returns a list of the people logged into the server.
+I suspect we really want to know who is in a paticular forum right?
+In which case we need another sub for this. 
+=cut
+
+sub GetRoster {
     my $self = shift;
     my $obj_ID = $self->_get_obj_id() or return "Not an object\n"; #Failure
     
-    my @rosterlistraw;
     my @rosterlist;
-    
-    @rosterlistraw = $jabber_client{$obj_ID}->RosterDBJIDs();
-    
-    foreach(@rosterlistraw) {
-        
-        my $username =$_->GetJID();
-        
+    foreach my $jid ($jabber_client{$obj_ID}->RosterDBJIDs()) {
+        my $username =$jid->GetJID();
         push(@rosterlist, $username) ;
-        
     }
-    
-    return(@rosterlist);
+    return @rosterlist;
 }    
 
 =back
 
 =head1 AUTHOR
 
-Todd Rinaldo, Robert Boone, Wade Johnson C<< <perl-net-jabber-bot@googlegroups.com) > >>
+Todd Rinaldo C<< <perl-net-jabber-bot@googlegroups.com) > >>
 
 =head1 BUGS
 
