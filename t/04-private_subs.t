@@ -3,7 +3,7 @@
 use strict;
 use warnings;
 
-use Test::More tests => 8;
+use Test::More tests => 7;
 use Net::Jabber::Bot;
 
 # stuff for mock client object
@@ -30,18 +30,17 @@ my $bot = Net::Jabber::Bot->new({
                                  , port => 'port_not_used'
                                  , username => 'username_not_used'
                                  , password => 'password_not_used'
-								 , alias => $alias
-								 , forums_and_responses => \%forums_and_responses
-								});
+                                 , alias => $alias
+                                 , forums_and_responses => \%forums_and_responses
+                                });
 isa_ok($bot, "Net::Jabber::Bot");
 
-my @privates = qw(CreateJabberNamespaces
-                  InitJabber
-                  Version
+my @privates = qw(InitJabber
+                  RequestVersion
                   _SendIndividualMessage
                   _get_obj_id
-		  callback_maker
-		 );
+                  callback_maker
+                  );
 
 foreach my $private_module (@privates) {
     my $call = "\$bot->$private_module()";
@@ -50,7 +49,7 @@ foreach my $private_module (@privates) {
 }
 
 sub InitLog4Perl {
-	use Log::Log4perl qw(:easy);
+    use Log::Log4perl qw(:easy);
     my $config_file .= <<'CONFIG_DATA';
 # Regular Screen Appender
 log4perl.appender.Screen           = Log::Log4perl::Appender::Screen

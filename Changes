@@ -1,5 +1,8 @@
 Revision history for Net-Jabber-Bot
 
+2.0.8
+Bot now resonds to iq requests for version info. Also added gtalk example into the manifest (forgot for 2.0.7)
+
 2.0.7
 Fix to get gtalk working, kindly provided by Yago Jesus. It's doing something really funky with setting the hostname to gmail.com.
 Need to later review why we're doing this. maybe we're ignorning connect messages from the server?

@@ -35,11 +35,11 @@ Net::Jabber::Bot - Automated Bot creation with safeties
 
 =head1 VERSION
 
-Version 2.0.7
+Version 2.0.8
 
 =cut
 
-our $VERSION = '2.0.7';
+our $VERSION = '2.0.8';
 
 =head1 SYNOPSIS
 
@@ -318,21 +318,8 @@ Sets up the special message handling and then initializes the connection.
 =cut
 
 sub START {
-    my ($self, $obj_ID, $arg_ref) = @_;
-#    CreateJabberNamespaces(); # Trying to get it to handle version messages.
+   my ($self, $obj_ID, $arg_ref) = @_;
    $self->InitJabber();
-}
-
-# Sets up special name space handling.
-sub CreateJabberNamespaces : PRIVATE {
-    Net::Jabber::Namespaces::add_ns(  ns => "jabber:iq:version",
-                      tag   => "query",
-                      xpath => {
-                        name       => { type=>'scalar' },
-                        version  => { type=>'scalar' },
-                        os      => { type=>'scalar' },
-                           }
-                   );
 }
 
 # Return a code reference that will pass self in addition to arguements passed to callback code ref.
@@ -371,7 +358,7 @@ sub InitJabber : PRIVATE {
     my %client_connect_hash;
     $client_connect_hash{hostname} = $connection_hash{$obj_ID}{'server'};
     $client_connect_hash{port}     = $connection_hash{$obj_ID}{'port'};
-    
+
     if ($connection_hash{$obj_ID}{'gtalk'}) { # Set additional parameters for gtalk connection. Will this work with all Jabber servers?
         $client_connect_hash{connectiontype} = 'tcpip';
         $client_connect_hash{tls} = '1';
@@ -405,9 +392,9 @@ sub InitJabber : PRIVATE {
     }
         return;
     }
-    
+
     $connection->RosterRequest();
-    
+
     $connection_session_id{$obj_ID} = $connection->{SESSION}->{id};
 
     DEBUG("Sending presence to tell world that we are logged in");
@@ -691,8 +678,8 @@ sub get_responses {
 }
 
 
-# Supposed to respond to version requests. *** NOT WORKING YET ****
-sub Version : PRIVATE {
+# Supposed to send version requests to other user/resources. *** NOT WORKING YET ****
+sub RequestVersion : PRIVATE {
     my $self = shift;
     my $obj_ID = $self->_get_obj_id() or return;
 
@@ -727,15 +714,15 @@ sub InIQ {
     my $xmlns = $query->GetXMLNS();DEBUG("xmlns=$xmlns");
     my $iqReply;
 
+    # Respond to version requests with information about myself.
     if($xmlns eq "jabber:iq:version") {
-    return;
-    $iqReply = new Net::XMPP::IQ();
-    my $iqType = $iqReply->NewChild( 'jabber:iq:version' );
-    $iqType->Setname("test");
-    #    $iqReply->Set("name", "Perl");
-    DEBUG("version");
-    } else {
-    return;
+        $iqReply = $iq->Reply();
+        my $response = $iqReply->GetQuery();
+        $response->SetName($connection_hash{$obj_ID}{'alias'});
+        $response->SetVer("2.0.7");
+        $response->SetOS($^O);
+    } else { # Unknown request. Just ignore it.
+        return;
     }
 
     DEBUG("Reply: ", $iqReply->GetXML());
@@ -1056,9 +1043,9 @@ sub ChangeStatus {
     my $obj_ID = $self->_get_obj_id() or return "Not an object\n"; #Failure
     my $presence_mode = shift;
     my $status_string = shift; # (optional)
-    
+
     $jabber_client{$obj_ID}->PresenceSend(show=>$presence_mode, status=>$status_string);
-    
+
     return 1;
 }
 
@@ -1068,20 +1055,20 @@ sub ChangeStatus {
 
 Returns a list of the people logged into the server.
 I suspect we really want to know who is in a paticular forum right?
-In which case we need another sub for this. 
+In which case we need another sub for this.
 =cut
 
 sub GetRoster {
     my $self = shift;
     my $obj_ID = $self->_get_obj_id() or return "Not an object\n"; #Failure
-    
+
     my @rosterlist;
     foreach my $jid ($jabber_client{$obj_ID}->RosterDBJIDs()) {
         my $username =$jid->GetJID();
         push(@rosterlist, $username) ;
     }
     return @rosterlist;
-}    
+}
 
 =back
 

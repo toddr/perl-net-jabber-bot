@@ -1,6 +1,7 @@
 Changes
 lib/Net/Jabber/Bot.pm
 examples/bot_example.pl
+examples/gtalk_RSSbot.pl
 Makefile.PL
 MANIFEST
 README
