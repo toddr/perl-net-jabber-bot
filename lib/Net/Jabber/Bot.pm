@@ -753,8 +753,10 @@ sub JabberPresenceMessage {
     my $type = $presence->GetType();
     if($type eq 'subscribe') { # Always allow people to subscribe to us. Why wouldn't we?
         my $from = $presence->GetFrom();
-        $jabber_client{$obj_ID}->Subscription(type=>"subscribed",
+        $jabber_client{$obj_ID}->Subscription(type=>"subscribe",
                                               to=>$from);
+        $jabber_client{$obj_ID}->Subscription(type=>"subscribed",to=>$from);
+        
         INFO("Processed subscription request from $from");
         return;
     } elsif($type eq 'unsubscribe') { # Always allow people to subscribe to us. Why wouldn't we?
@@ -775,6 +777,8 @@ sub JabberPresenceMessage {
 
     DEBUG("Presence From $from t=$type s=$status");
     DEBUG("Presence XML: " . $presence->GetXML());
+    
+    print "Presence From $from t=$type s=$status\n" ;
 }
 
 =item B<respond_to_self_messages>
@@ -1069,6 +1073,32 @@ sub GetRoster {
     }
     return @rosterlist;
 }
+
+sub GetStatus {
+    
+    my $self = shift;
+    my $obj_ID = $self->_get_obj_id() or return "Not an object\n"; #Failure
+    my ($jid) = shift;
+	
+    print "$jid\n" ;
+	
+    my $Pres = $jabber_client{$obj_ID}->PresenceDBQuery($jid);
+
+    if (!(defined($Pres))) {
+        print "$jid no esta\n";
+        return "unavailable" ;
+    }
+
+    my $show = $Pres->GetShow();
+    if ($show) {
+        print "$jid $show\n" ;
+        return $show;
+    }
+
+    return "available";
+    
+}
+
 
 =back
 
