@@ -777,8 +777,6 @@ sub JabberPresenceMessage {
 
     DEBUG("Presence From $from t=$type s=$status");
     DEBUG("Presence XML: " . $presence->GetXML());
-    
-    print "Presence From $from t=$type s=$status\n" ;
 }
 
 =item B<respond_to_self_messages>
@@ -1080,18 +1078,16 @@ sub GetStatus {
     my $obj_ID = $self->_get_obj_id() or return "Not an object\n"; #Failure
     my ($jid) = shift;
 	
-    print "$jid\n" ;
-	
     my $Pres = $jabber_client{$obj_ID}->PresenceDBQuery($jid);
 
     if (!(defined($Pres))) {
-        print "$jid no esta\n";
+        
         return "unavailable" ;
     }
 
     my $show = $Pres->GetShow();
     if ($show) {
-        print "$jid $show\n" ;
+        
         return $show;
     }
 
