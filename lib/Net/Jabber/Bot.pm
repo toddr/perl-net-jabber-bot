@@ -1096,6 +1096,31 @@ sub GetStatus {
 }
 
 
+sub AddUser {
+    
+    my $self = shift;
+    my $obj_ID = $self->_get_obj_id() or return "Not an object\n"; #Failure
+    my ($user) = shift;
+    
+    $jabber_client{$obj_ID}->Subscription(type=>"subscribe", to=>$user);
+    
+    $jabber_client{$obj_ID}->Subscription(type=>"subscribed",to=>$user);
+    
+}
+
+sub RmUser {
+    
+    my $self = shift;
+    my $obj_ID = $self->_get_obj_id() or return "Not an object\n"; #Failure
+    my ($user) = shift;
+    
+    $jabber_client{$obj_ID}->Subscription(type=>"unsubscribe", to=>$user);
+    
+    $jabber_client{$obj_ID}->Subscription(type=>"unsubscribed",to=>$user);
+    
+}
+
+
 =back
 
 =head1 AUTHOR
