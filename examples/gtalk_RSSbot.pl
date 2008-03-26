@@ -9,8 +9,6 @@ use strict;
 
 my $url = 'http://feeds.boingboing.net/boingboing/iBag' ;
 
-my @users = ('yago.jesus@gmail.com', 'someuser@gmail.com', 'anotheruser@gmail.com') ;
-
 my $username = 'your.gtalk.user';
 my $password = 'yourpassword';
 
@@ -37,6 +35,8 @@ my $bot = Net::Jabber::Bot->new({
                             })|| die "ooops\n" ;
 
 
+my @users = $bot->GetRoster() ;
+
 $bot->Start();
 
 sub new_bot_message {
@@ -58,9 +58,17 @@ sub background_checks {
 
     return if ($last_title eq $title)
     foreach my $tosend (@users) {
-          $bot->SendPersonalMessage($tosend, "$title");
-          $bot->SendPersonalMessage($tosend, "$link");
+          
+        my $status = $bot->GetStatus($tosend);
+          
+        if ($status != "unavailable") {
+          
+            $bot->SendPersonalMessage($tosend, "$title");
+            $bot->SendPersonalMessage($tosend, "$link");
+        }    
+        
     }
+    
     $last_title=$title; # Now make the new title recieved the most recent title.
 }
 
