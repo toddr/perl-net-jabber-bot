@@ -335,7 +335,7 @@ Sets up the special message handling and then initializes the connection.
 
 sub START {
    my ($self, $obj_ID, $arg_ref) = @_;
-   $self->InitJabber();
+   $self->InitJabber(); # Will not connect now until 
 }
 
 # Return a code reference that will pass self in addition to arguements passed to callback code ref.
@@ -420,6 +420,7 @@ sub InitJabber : PRIVATE {
         $self->JoinForum($forum);
     }
 
+    INFO("Connected to server '$connection_hash{$obj_ID}{'server'}' successfully");
     $client_start_time{$obj_ID} = time; # Track when we came online.
     return 1;
 }
@@ -535,10 +536,11 @@ sub ReconnectToServer {
 
     my $sleep_time = 5;
     while (!$self->IsConnected()) { # jabber_client variable defines if we're connected.
-        DEBUG("Sleeping $sleep_time before attempting re-connect");
+        INFO("Sleeping $sleep_time before attempting re-connect");
         sleep $sleep_time;
         $sleep_time *= 2 if($sleep_time < 300);
         $self->InitJabber();
+        INFO("Running background routine.");
         &$background_subroutine($self, 0); # call background proc so we can check for errors while down.
     }
 }
@@ -556,7 +558,7 @@ sub Disconnect {
 
     $client_start_time{$obj_ID} = 0;
 
-    DEBUG("Disconnecting from server");
+    INFO("Disconnecting from server");
     return -1 if(!defined($jabber_client{$obj_ID})); # do not proceed, no object.
 
     $jabber_client{$obj_ID}->Disconnect();
