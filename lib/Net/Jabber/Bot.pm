@@ -8,7 +8,7 @@ use version;
 use Net::Jabber;
 use Time::HiRes;
 use Log::Log4perl qw(:easy);
-
+#use Data::Dumper; #For testing only.
 use Class::Std;
 
 my %jabber_client   : ATTR; # Keep track of the jabber object we are using.
@@ -94,8 +94,10 @@ if you do not export anything, such as for a purely object-oriented module.
 =item B<new>
 
     my $bot = Net::Jabber::Bot->new({
-                                 server => 'host.domain.com'
+                                 server => 'host.domain.com' # Name of server when sending messages internally.
                                 , conference_server => 'conference.host.domain.com'
+                                , server_host => 'talk.domain.com', # used to specify what jabber server to connect to on connect?
+                                , tls => 0 # Used by gtalk. breaks if set elsewhere.
                                 , port => 522
                                 , username => 'username'
                                 , password => 'pasword'
@@ -235,9 +237,20 @@ sub BUILD {
     $safety_mode{$obj_ID} = 1;
     }
 
+    if($arg_ref->{'gtalk'}) { # Google settings we're auto-setting
+        $connection_hash{$obj_ID}{'server_host'} = 'gmail.com';
+        $connection_hash{$obj_ID}{'tls'} = 1;
+    }
+
+    if(defined $arg_ref->{'server_host'}) {
+        $connection_hash{$obj_ID}{'server_host'} = $arg_ref->{'server_host'} # Actual server to connect to.
+    }
+
+    # Added tls option (used for gtalk for sure)
+    $connection_hash{$obj_ID}{'tls'} = $arg_ref->{'tls'};
+
     $connection_hash{$obj_ID}{'server'} = $arg_ref->{'server'};
     $connection_hash{$obj_ID}{'conference_server'} = $arg_ref->{'conference_server'};
-    $connection_hash{$obj_ID}{'gtalk'} = $arg_ref->{'gtalk'};
 
 
     $connection_hash{$obj_ID}{'port'} = $arg_ref->{'port'};
@@ -356,14 +369,12 @@ sub InitJabber : PRIVATE {
 
     DEBUG("Connect. hostname => $connection_hash{$obj_ID}{'server'} , port => $connection_hash{$obj_ID}{'port'}");
     my %client_connect_hash;
-    $client_connect_hash{hostname} = $connection_hash{$obj_ID}{'server'};
+    $client_connect_hash{hostname} = 'mx.jpmorgan.com';$connection_hash{$obj_ID}{'server'};
     $client_connect_hash{port}     = $connection_hash{$obj_ID}{'port'};
+    $client_connect_hash{connectiontype} = 'tcpip';
 
-    if ($connection_hash{$obj_ID}{'gtalk'}) { # Set additional parameters for gtalk connection. Will this work with all Jabber servers?
-        $client_connect_hash{connectiontype} = 'tcpip';
-        $client_connect_hash{tls} = '1';
-        $client_connect_hash{componentname} = 'gmail.com';
-    }
+    # Currently have to set this for google.
+    $client_connect_hash{tls} = '1' if($connection_hash{$obj_ID}{'tls'});
 
     my $status = $connection->Connect(%client_connect_hash);
 
@@ -374,23 +385,20 @@ sub InitJabber : PRIVATE {
 
     DEBUG("Logging in... as user $connection_hash{$obj_ID}{'username'} / $connection_hash{$obj_ID}{'alias'}");
 
-    if ($connection_hash{$obj_ID}{'gtalk'}) {
+    my $sid = $connection->{SESSION}->{id};
+    $connection->{STREAM}->{SIDS}->{$sid}->{hostname} = $connection_hash{$obj_ID}{'server_host'};
 
-         my $sid = $connection->{SESSION}->{id};
-        $connection->{STREAM}->{SIDS}->{$sid}->{hostname} = 'gmail.com';
-
-    }
 
     my @auth_result = $connection->AuthSend(username=>$connection_hash{$obj_ID}{'username'},
                                             password=>$connection_hash{$obj_ID}{'password'},
                                             resource=>$connection_hash{$obj_ID}{'alias'});
 
     if(!defined $auth_result[0] || $auth_result[0] ne "ok") {
-    ERROR("ERROR: Authorization failed:");
+    ERROR("ERROR: Authorization failed: for $connection_hash{$obj_ID}{'username'} / $connection_hash{$obj_ID}{'alias'}");
     foreach my $result (@auth_result) {
         ERROR("$result");
     }
-        return;
+    return;
     }
 
     $connection->RosterRequest();
@@ -756,7 +764,6 @@ sub JabberPresenceMessage {
         $jabber_client{$obj_ID}->Subscription(type=>"subscribe",
                                               to=>$from);
         $jabber_client{$obj_ID}->Subscription(type=>"subscribed",to=>$from);
-        
         INFO("Processed subscription request from $from");
         return;
     } elsif($type eq 'unsubscribe') { # Always allow people to subscribe to us. Why wouldn't we?
@@ -1073,54 +1080,46 @@ sub GetRoster {
 }
 
 sub GetStatus {
-    
+
     my $self = shift;
     my $obj_ID = $self->_get_obj_id() or return "Not an object\n"; #Failure
     my ($jid) = shift;
-	
+
     my $Pres = $jabber_client{$obj_ID}->PresenceDBQuery($jid);
 
     if (!(defined($Pres))) {
-        
+
         return "unavailable" ;
     }
 
     my $show = $Pres->GetShow();
     if ($show) {
-        
+
         return $show;
     }
 
     return "available";
-    
+
 }
 
 
 sub AddUser {
-    
     my $self = shift;
     my $obj_ID = $self->_get_obj_id() or return "Not an object\n"; #Failure
-    my ($user) = shift;
-    
+    my $user = shift;
+
     $jabber_client{$obj_ID}->Subscription(type=>"subscribe", to=>$user);
-    
     $jabber_client{$obj_ID}->Subscription(type=>"subscribed",to=>$user);
-    
 }
 
 sub RmUser {
-    
     my $self = shift;
     my $obj_ID = $self->_get_obj_id() or return "Not an object\n"; #Failure
-    my ($user) = shift;
-    
+    my $user = shift;
+
     $jabber_client{$obj_ID}->Subscription(type=>"unsubscribe", to=>$user);
-    
     $jabber_client{$obj_ID}->Subscription(type=>"unsubscribed",to=>$user);
-    
 }
-
-
 =back
 
 =head1 AUTHOR
