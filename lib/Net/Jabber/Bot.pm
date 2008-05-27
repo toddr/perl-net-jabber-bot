@@ -17,8 +17,8 @@ my %connection_session_id : ATTR; # Reverse hash where we'll figure out what obj
 my %message_function : ATTR; # What is called if we are fed a new message once we are logged in.
 my %bot_background_activity : ATTR; # What is called if we are fed a new message once we are logged in.
 my %forum_join_time : ATTR; # Tells us if we've parsed historical messages yet.
-my %client_start_time :ATTR; # Track when we came online.
-my %process_timeout : ATTR; # Time to take in process loop if no messages found/
+my %client_start_time :ATTR; # Track when we came online. Also used to determine if we're online.
+my %process_timeout : ATTR; # Time to take in process loop if no messages found
 my %loop_sleep_time : ATTR; # Time to sleep each time we go through a Start() loop.
 my %ignore_messages : ATTR; #Messages to ignore if we recieve them.
 my %forums_and_responses: ATTR; # List of forums we have joined and who we respond to in each forum
@@ -35,11 +35,11 @@ Net::Jabber::Bot - Automated Bot creation with safeties
 
 =head1 VERSION
 
-Version 2.0.8
+Version 2.0.9
 
 =cut
 
-our $VERSION = '2.0.8';
+our $VERSION = '2.0.9';
 
 =head1 SYNOPSIS
 
@@ -225,6 +225,9 @@ safetey: 166
 sub BUILD {
     my ($self, $obj_ID, $arg_ref) = @_;
 
+
+    $client_start_time{$obj_ID} = 0; # Initially disconnected.
+    
     $forum_join_grace{$obj_ID} = 20;
 
     # Safety mode is on unless they feed us 0 or off explicitly
@@ -492,21 +495,22 @@ sub Start {
     my $counter = 0; # Keep track of how many times we've looped. Not sure if we'll use this long term.
 
     while(1) { # Loop for ever!
-    # Process and re-connect if you have to.
-    my $reconnect_timeout = 1;
-    while(!defined $self->Process($process_timeout)) {
-        Time::HiRes::sleep $reconnect_timeout++; # Timeout Progressiveley longer.
-        my $message = "Disconnected from $connection_hash{$obj_ID}{'server'}:$connection_hash{$obj_ID}{'port'}"
-        . " as $connection_hash{$obj_ID}{'username'}.";
-        ERROR("$message Reconnecting...");
-        $self->ReconnectToServer();
-        next; # do not allow background to run till you've re-connected.
-    }
+        # Process and re-connect if you have to.
+        my $reconnect_timeout = 1;
+        eval {$self->Process($process_timeout)};
+        
+        if($@) { #Assume the connection is down...
+            my $message = "Disconnected from $connection_hash{$obj_ID}{'server'}:$connection_hash{$obj_ID}{'port'}"
+                        . " as $connection_hash{$obj_ID}{'username'}.";
+            ERROR("$message Reconnecting...");
+            $self->ReconnectToServer();
+        }
+
         # Call background function
-    if(defined $background_subroutine && $last_background + $time_between_background_routines < time) {
-        &$background_subroutine($self, ++$counter);
-        $last_background = time;
-    }
+        if(defined $background_subroutine && $last_background + $time_between_background_routines < time) {
+            &$background_subroutine($self, ++$counter);
+            $last_background = time;
+        }
         Time::HiRes::sleep $message_delay;
     }
 }
@@ -524,8 +528,19 @@ Internal process
 sub ReconnectToServer {
     my $self = shift;
 
+    my $obj_ID = $self->_get_obj_id() or return; # Not an object.
+    my $background_subroutine = $bot_background_activity{$obj_ID};
+
     $self->Disconnect();
-    $self->InitJabber();
+
+    my $sleep_time = 5;
+    while (!$self->IsConnected()) { # jabber_client variable defines if we're connected.
+        DEBUG("Sleeping $sleep_time before attempting re-connect");
+        sleep $sleep_time;
+        $sleep_time *= 2 if($sleep_time < 300);
+        $self->InitJabber();
+        &$background_subroutine($self, 0); # call background proc so we can check for errors while down.
+    }
 }
 
 =item B<Disconnect>
@@ -539,12 +554,30 @@ sub Disconnect {
     my $self = shift;
     my $obj_ID = $self->_get_obj_id() or return; # Not an object.
 
+    $client_start_time{$obj_ID} = 0;
 
+    DEBUG("Disconnecting from server");
     return -1 if(!defined($jabber_client{$obj_ID})); # do not proceed, no object.
 
     $jabber_client{$obj_ID}->Disconnect();
     delete $jabber_client{$obj_ID};
+
+    DEBUG("Disconnected.");
     return 1;
+}
+
+=item B<IsConnected>
+
+Reports connect state (true/false) based on the status of client_start_time.
+
+=cut
+
+sub IsConnected {
+    my $self = shift;
+    my $obj_ID = $self->_get_obj_id() or return; # Not an object.
+
+    DEBUG("REF = " . ref($jabber_client{$obj_ID}));
+    return $client_start_time{$obj_ID};
 }
 
 =item B<ProcessJabberMessage> - DO NOT CALL
@@ -942,8 +975,8 @@ sub _SendIndividualMessage : PRIVATE {
     }
 
     if(!defined $recipient) {
-    ERROR('$recipient not defined!');
-    return "No recipient!\n";
+        ERROR('$recipient not defined!');
+        return "No recipient!\n";
     }
 
     my $yday = (localtime)[7];
@@ -951,19 +984,35 @@ sub _SendIndividualMessage : PRIVATE {
     my $messages_this_hour = ++$messages_sent_today{$obj_ID}{$yday}{$hour};
 
     if($messages_this_hour > $max_messages_per_hour{$obj_ID}) {
-    $subject = "" if(!defined $subject); # Keep warning messages quiet.
-    $message_chunk = "" if(!defined $message_chunk); # Keep warning messages quiet.
+        $subject = "" if(!defined $subject); # Keep warning messages quiet.
+        $message_chunk = "" if(!defined $message_chunk); # Keep warning messages quiet.
 
-    ERROR("Can't Send message because we've already tried to send $messages_this_hour of $max_messages_per_hour{$obj_ID} messages this hour.\n"
-          . "To: $recipient\n"
-          . "Subject: $subject\n"
-          . "Type: $message_type\n"
-          . "Message sent:\n"
-          . "$message_chunk"
-          );
+        ERROR("Can't Send message because we've already tried to send $messages_this_hour of $max_messages_per_hour{$obj_ID} messages this hour.\n"
+              . "To: $recipient\n"
+              . "Subject: $subject\n"
+              . "Type: $message_type\n"
+              . "Message sent:\n"
+              . "$message_chunk"
+              );
 
-    # Send 1 panic message out to jabber if this is our last message before quieting down.
-    return "Too many messages ($messages_this_hour)\n";
+        # Send 1 panic message out to jabber if this is our last message before quieting down.
+        return "Too many messages ($messages_this_hour)\n";
+    }
+    
+    if(!$self->IsConnected) {
+        $subject = "" if(!defined $subject); # Keep warning messages quiet.
+        $message_chunk = "" if(!defined $message_chunk); # Keep warning messages quiet.
+
+        ERROR("Can't Jabber server is down. Tried to send: \n"
+              . "To: $recipient\n"
+              . "Subject: $subject\n"
+              . "Type: $message_type\n"
+              . "Message sent:\n"
+              . "$message_chunk"
+              );
+
+        # Send 1 panic message out to jabber if this is our last message before quieting down.
+        return "Server is down.\n";
     }
 
     $message_chunk =~ s/[^ -~\r\n]/./g; #Strip out anything that's not a printable character
@@ -1079,6 +1128,12 @@ sub GetRoster {
     return @rosterlist;
 }
 
+=item B<GetStatus>
+
+Need documentation from Yago on this sub.
+
+=cut
+
 sub GetStatus {
 
     my $self = shift;
@@ -1102,6 +1157,11 @@ sub GetStatus {
 
 }
 
+=item B<AddUser>
+
+Need documentation from Yago on this sub.
+
+=cut
 
 sub AddUser {
     my $self = shift;
@@ -1111,6 +1171,12 @@ sub AddUser {
     $jabber_client{$obj_ID}->Subscription(type=>"subscribe", to=>$user);
     $jabber_client{$obj_ID}->Subscription(type=>"subscribed",to=>$user);
 }
+
+=item B<RmUser>
+
+Need documentation from Yago on this sub.
+
+=cut
 
 sub RmUser {
     my $self = shift;
