@@ -369,7 +369,7 @@ sub InitJabber : PRIVATE {
 
     DEBUG("Connect. hostname => $connection_hash{$obj_ID}{'server'} , port => $connection_hash{$obj_ID}{'port'}");
     my %client_connect_hash;
-    $client_connect_hash{hostname} = 'mx.jpmorgan.com';$connection_hash{$obj_ID}{'server'};
+    $client_connect_hash{hostname} = $connection_hash{$obj_ID}{'server'};
     $client_connect_hash{port}     = $connection_hash{$obj_ID}{'port'};
     $client_connect_hash{connectiontype} = 'tcpip';
 
