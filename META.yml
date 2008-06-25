@@ -1,0 +1,20 @@
+--- #YAML:1.0
+name:                Net-Jabber-Bot
+version:             2.0.9
+abstract:            Automated Bot creation with safeties
+license:             ~
+generated_by:   Todd Rinaldo <toddr@null.net>
+distribution_type:   module
+requires:
+    Class::Std:                    0
+    Log::Log4perl:                 0
+    Net::Jabber:                   2
+    Test::More:                    0
+meta-spec:
+        licence:        http://dev.perl.org/licenses/
+        homepage:       http://perl-net-jabber-bot.googlecode.com/
+        bugtracker:     http://code.google.com/p/perl-net-jabber-bot/issues/list
+        repository:     http://perl-net-jabber-bot/svn/trunk/
+        MailingList:    http://groups.google.com/group/perl-net-jabber-bot
+author:
+    - Todd E Rinaldo <perl-net-jabber-bot@googlegroups.com>
