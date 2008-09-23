@@ -1,5 +1,8 @@
 Revision history for Net-Jabber-Bot
 
+2.1.0 
+MOOSE!!!
+
 2.0.9
 New subroutines (AddUser, RmUser, GetStatus, GetRoster) to track ??? 
 IsConnected reports connect status now.

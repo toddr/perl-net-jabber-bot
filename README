@@ -3,7 +3,7 @@ Net-Jabber-Bot
 This is the readme on how to install Jabber Bot
 
 Pre-Reqs - 
-Class::Std
+Moose
 Net::Jabber
 
 INSTALLATION

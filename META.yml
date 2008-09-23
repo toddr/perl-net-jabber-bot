@@ -1,6 +1,6 @@
 --- #YAML:1.0
 name:                Net-Jabber-Bot
-version:             2.0.9
+version:             2.1.0
 abstract:            Automated Bot creation with safeties
 license:             ~
 generated_by:   Todd Rinaldo <toddr@null.net>
