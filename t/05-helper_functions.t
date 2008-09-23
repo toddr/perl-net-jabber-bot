@@ -45,15 +45,15 @@ our $start_time = time;
 
 ok(1, "Creating Net::Jabber::Bot object with Mock client library asserted in place of Net::Jabber::Client");
 
-my $bot = Net::Jabber::Bot->new({
+my $bot = Net::Jabber::Bot->new(
 				 server => $server
 				 , conference_server => "conference.$server"
 				 , port => 5222
 				 , username => 'test_username'
 				 , password => 'test_pass'
 				 , alias => $bot_alias
-				 , message_callback => \&new_bot_message   # Called if new messages arrive.
-				 , background_activity => \&background_checks # What the bot does outside jabber.
+				 , message_function => \&new_bot_message   # Called if new messages arrive.
+				 , background_function => \&background_checks # What the bot does outside jabber.
 				 , loop_sleep_time => $loop_sleep_time # Minimum time before doing background function.
 				 , process_timeout => $server_info_timeout # Time to wait for new jabber messages before doing background stuff
 				 , forums_and_responses => \%forums_and_responses
@@ -62,7 +62,7 @@ my $bot = Net::Jabber::Bot->new({
 				 , out_messages_per_second => $out_messages_per_second
 				 , max_message_size => $max_message_size
 				 , max_messages_per_hour => $max_messages_per_hour
-				});
+				);
 
 isa_ok($bot, "Net::Jabber::Bot");
 ok(1, "Sleeping 22 seconds to make sure we get past initializtion");

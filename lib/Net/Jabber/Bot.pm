@@ -17,26 +17,39 @@ coerce 'Bool'
             => via {($_ =~ m/(^on$)|(^true$)/i) + 0}; # True if it's on or true. Otherwise false.
 
 subtype 'JabberClientObject'    => as 'Object' => where { $_->isa('Net::Jabber::Client') };
-has jabber_client               => (isa => 'JabberClientObject', 
+
+subtype 'PosInt'
+      => as 'Int'
+      => where { $_ > 0 };
+
+subtype 'PosNum'
+      => as 'Num'
+      => where { $_ > 0 };
+
+subtype 'HundredInt'
+      => as 'Num'
+      => where { $_ > 100 };
+
+has jabber_client               => (isa => 'Maybe[JabberClientObject]', 
                                     is => 'rw',
                                     default => sub {Net::Jabber::Client->new});
 #my %connection_hash : ATTR; # Keep track of connection options fed to client.
 
-has 'client_session_id' => (isa => 'Int', is => 'rw');
-has 'connect_time'        => (isa => 'Int', is => 'rw', where { $_ > 0 });
-has 'forum_join_grace'    => (isa => 'Num', is => 'rw', where { $_ > 0 });
-has 'server_host '        => (isa => 'Str', is => 'rw');
+has 'client_session_id'   => (isa => 'Str', is => 'rw');
+has 'connect_time'        => (isa => 'PosInt', is => 'rw', default => 9_999_999_999);
+has 'forum_join_grace'    => (isa => 'PosNum', is => 'rw', default => 10);
+has 'server_host'         => (isa => 'Str', is => 'rw');
 has 'server'              => (isa => 'Str', is => 'rw');
-has 'port'                => (isa => 'Int', is => 'rw', default => 5222, where { $_ > 0 });
+has 'port'                => (isa => 'PosInt', is => 'rw', default => 5222);
 has 'tls'                 => (isa => 'Bool', is => 'rw');
 has 'conference_server'   => (isa => 'Str', is => 'rw');
 has 'username'            => (isa => 'Str', is => 'rw');
 has 'password'            => (isa => 'Str', is => 'rw');
 has 'alias'               => (isa => 'Str', is => 'rw', default => sub{'net_jabber_bot'});
-has 'message_function'    => (isa => 'Maybe[CodeRef]', is => 'rw', default => undef);
-has 'background_function' => (isa => 'Maybe[CodeRef]', is => 'rw', default => undef);
-has 'loop_sleep_time'     => (isa => 'Num', is => 'rw', default => 5, where { $_ > 0 });
-has 'process_timeout'     => (isa => 'Num', is => 'rw', default => 5, where { $_ > 0 });
+has 'message_function'    => (isa => 'Maybe[CodeRef]', is => 'rw', default => sub{undef});
+has 'background_function' => (isa => 'Maybe[CodeRef]', is => 'rw', default => sub{undef});
+has 'loop_sleep_time'     => (isa => 'PosNum', is => 'rw', default => 5);
+has 'process_timeout'     => (isa => 'PosNum', is => 'rw', default => 5);
 has 'from_full'           => (isa => 'Str', is => 'rw', default => sub{my $self = shift; 
                                                                        $self->username . 
                                                                        '@' . 
@@ -48,16 +61,16 @@ has 'safety_mode'            => (isa => 'Bool', is => 'rw', default => 1, coerce
 has 'gtalk'                  => (isa => 'Bool', is => 'rw', default => 0, coerce => 1);
 has 'ignore_server_messages' => (isa => 'Bool', is => 'rw', default => 1, coerce => 1);
 has 'ignore_self_messages'   => (isa => 'Bool', is => 'rw', default => 1, coerce => 1);
-has 'forums_and_responses'   => (isa => 'HashRef[Str]', is => 'rw'); # List of forums we're in and the strings we monitor for.
-has 'forum_join_time'        => (isa => 'HashRef[Int]', is => 'rw'); # List of when we joined each forum
-has 'out_messages_per_second' => (isa => 'Num', is => 'rw', default => 5, where { $_ > 0 });
-has 'message_delay'           => (isa => 'Num', is => 'rw', where { $_ > 0 }, default => sub {1/shift->out_messages_per_second});
+has 'forums_and_responses'   => (isa => 'HashRef[ArrayRef[Str]]', is => 'rw'); # List of forums we're in and the strings we monitor for.
+has 'forum_join_time'        => (isa => 'HashRef[Int]', is => 'rw', default => sub{{}}); # List of when we joined each forum
+has 'out_messages_per_second' => (isa => 'PosNum', is => 'rw', default => sub{5});
+has 'message_delay'           => (isa => 'PosNum', is => 'rw', default => sub {1/5});
 
-has 'max_message_size'        => (isa => 'Int', is => 'rw', default => 1,000,000 , where { $_ > 100 });
-has 'max_messages_per_hour'   => (isa => 'Int', is => 'rw', default => 1,000,000 , where { $_ > 100 });
+has 'max_message_size'        => (isa => 'HundredInt', is => 'rw', default => 1000000);
+has 'max_messages_per_hour'   => (isa => 'PosInt',     is => 'rw', default => 1000000);
 
 # Initialize this hour's message count.
-has 'messages_sent_today'     => (isa => 'HashRef', is => 'ro', default => {(localtime)[7] => {(localtime)[2] => 0}}); 
+has 'messages_sent_today'     => (isa => 'HashRef', is => 'ro', default => sub{{(localtime)[7] => {(localtime)[2] => 0}}}); 
 
 
 #my %message_function : ATTR; # What is called if we are fed a new message once we are logged in.
@@ -277,7 +290,11 @@ sub BUILD {
         $self->tls(1);
     }
 
+    # Message delay is inverse of out_messages_per_second
+    $self->message_delay(1/$self->out_messages_per_second);
 
+    # server_host defaults fo server if not defined explicitly
+    $self->server_host($self->server) if(!$self->server_host);
 
     # Enforce all our safety restrictions here.
     if($self->safety_mode) {
@@ -295,11 +312,11 @@ sub BUILD {
     }
     
     #Initialize the connection.
-    $self->InitJabber;
+    $self->_InitJabber;
 }
 
 # Return a code reference that will pass self in addition to arguements passed to callback code ref.
-sub callback_maker {
+sub _callback_maker {
     my $self = shift;
     my $Function = shift;
 
@@ -308,7 +325,7 @@ sub callback_maker {
 }
 
 # Creates client object and manages connection. Called on new but also called by re-connect
-sub InitJabber {
+sub _InitJabber {
     my $self = shift;
 
     # Determine if the object already exists and if not, create it.
@@ -322,9 +339,9 @@ sub InitJabber {
 
     $connection->PresenceDB(); # Init presence DB.
     $connection->RosterDB(); # Init Roster DB.
-    $connection->SetCallBacks( 'message'  => $self->callback_maker(\&ProcessJabberMessage)
-                              ,'presence' => $self->callback_maker(\&JabberPresenceMessage)
-                              ,'iq'       => $self->callback_maker(\&InIQ)
+    $connection->SetCallBacks( 'message'  => $self->_callback_maker(\&ProcessJabberMessage)
+                              ,'presence' => $self->_callback_maker(\&JabberPresenceMessage)
+                              ,'iq'       => $self->_callback_maker(\&InIQ)
                               );
 
     DEBUG("Connect. hostname => $self->server() , port => $self->port()");
@@ -402,7 +419,7 @@ sub JoinForum {
                                   nick   => $self->alias,
                                   );
 
-    $self->forum_join_time(time);
+    $self->forum_join_time->{$forum_name} = time;
     DEBUG("Sleeping $self->message_delay seconds");
     Time::HiRes::sleep $self->message_delay;
 }
@@ -507,10 +524,10 @@ Disconnects from server if client object is defined. Assures the client object i
 sub Disconnect {
     my $self = shift;
 
-    $self->connect_time(0);
+    $self->connect_time('9' x 10); # Way in the future
 
     INFO("Disconnecting from server");
-    return -1 if(!defined($self->jabber_client)); # do not proceed, no object.
+    return if(!defined $self->jabber_client); # do not proceed, no object.
 
     $self->jabber_client->Disconnect();
     my $old_client = $self->jabber_client;
@@ -670,7 +687,7 @@ sub get_responses {
 
 
 # Supposed to send version requests to other user/resources. *** NOT WORKING YET ****
-sub RequestVersion {
+sub _RequestVersion {
     my $self = shift;
 
     my $iq = new Net::XMPP::IQ();
@@ -922,7 +939,7 @@ sub _SendIndividualMessage {
 
     my $yday = (localtime)[7];
     my $hour = (localtime)[2];
-    my $messages_this_hour = ++$self->messages_sent_today->{$yday}->{$hour};
+    my $messages_this_hour = $self->messages_sent_today->{$yday}->{$hour} += 1;
 
     if($messages_this_hour > $self->max_messages_per_hour) {
         $subject = "" if(!defined $subject); # Keep warning messages quiet.
