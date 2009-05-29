@@ -16,31 +16,31 @@ coerce 'Bool'
     => from 'Str'
             => via {($_ =~ m/(^on$)|(^true$)/i) + 0}; # True if it's on or true. Otherwise false.
 
-subtype 'JabberClientObject'    => as 'Object' => where { $_->isa('Net::Jabber::Client') };
+subtype 'Moose::Type::JabberClientObject'    => as 'Object' => where { $_->isa('Net::Jabber::Client') };
 
-subtype 'PosInt'
+subtype 'Moose::Type::PosInt'
       => as 'Int'
       => where { $_ > 0 };
 
-subtype 'PosNum'
+subtype 'Moose::Type::PosNum'
       => as 'Num'
       => where { $_ > 0 };
 
-subtype 'HundredInt'
+subtype 'Moose::Type::HundredInt'
       => as 'Num'
       => where { $_ > 100 };
 
-has jabber_client               => (isa => 'Maybe[JabberClientObject]', 
+has jabber_client               => (isa => 'Maybe[Moose::Type::JabberClientObject]',
                                     is => 'rw',
                                     default => sub {Net::Jabber::Client->new});
 #my %connection_hash : ATTR; # Keep track of connection options fed to client.
 
 has 'client_session_id'   => (isa => 'Str', is => 'rw');
-has 'connect_time'        => (isa => 'PosInt', is => 'rw', default => 9_999_999_999);
-has 'forum_join_grace'    => (isa => 'PosNum', is => 'rw', default => 10);
-has 'server_host'         => (isa => 'Str', is => 'rw');
+has 'connect_time'        => (isa => 'Moose::Type::PosInt', is => 'rw', default => 9_999_999_999);
+has 'forum_join_grace'    => (isa => 'Moose::Type::PosNum', is => 'rw', default => 10);
+has 'server_host'         => (isa => 'Str', is => 'rw', lazy => 1, default => sub{shift->server });
 has 'server'              => (isa => 'Str', is => 'rw');
-has 'port'                => (isa => 'PosInt', is => 'rw', default => 5222);
+has 'port'                => (isa => 'Moose::Type::PosInt', is => 'rw', default => 5222);
 has 'tls'                 => (isa => 'Bool', is => 'rw');
 has 'conference_server'   => (isa => 'Str', is => 'rw');
 has 'username'            => (isa => 'Str', is => 'rw');
@@ -48,11 +48,11 @@ has 'password'            => (isa => 'Str', is => 'rw');
 has 'alias'               => (isa => 'Str', is => 'rw', default => sub{'net_jabber_bot'});
 has 'message_function'    => (isa => 'Maybe[CodeRef]', is => 'rw', default => sub{undef});
 has 'background_function' => (isa => 'Maybe[CodeRef]', is => 'rw', default => sub{undef});
-has 'loop_sleep_time'     => (isa => 'PosNum', is => 'rw', default => 5);
-has 'process_timeout'     => (isa => 'PosNum', is => 'rw', default => 5);
-has 'from_full'           => (isa => 'Str', is => 'rw', default => sub{my $self = shift; 
-                                                                       $self->username . 
-                                                                       '@' . 
+has 'loop_sleep_time'     => (isa => 'Moose::Type::PosNum', is => 'rw', default => 5);
+has 'process_timeout'     => (isa => 'Moose::Type::PosNum', is => 'rw', default => 5);
+has 'from_full'           => (isa => 'Str', is => 'rw', default => sub{my $self = shift;
+                                                                       $self->username .
+                                                                       '@' .
                                                                        $self->server .
                                                                        '/' .
                                                                        $self->alias});
@@ -63,14 +63,14 @@ has 'ignore_server_messages' => (isa => 'Bool', is => 'rw', default => 1, coerce
 has 'ignore_self_messages'   => (isa => 'Bool', is => 'rw', default => 1, coerce => 1);
 has 'forums_and_responses'   => (isa => 'HashRef[ArrayRef[Str]]', is => 'rw'); # List of forums we're in and the strings we monitor for.
 has 'forum_join_time'        => (isa => 'HashRef[Int]', is => 'rw', default => sub{{}}); # List of when we joined each forum
-has 'out_messages_per_second' => (isa => 'PosNum', is => 'rw', default => sub{5});
-has 'message_delay'           => (isa => 'PosNum', is => 'rw', default => sub {1/5});
+has 'out_messages_per_second' => (isa => 'Moose::Type::PosNum', is => 'rw', default => sub{5});
+has 'message_delay'           => (isa => 'Moose::Type::PosNum', is => 'rw', default => sub {1/5});
 
-has 'max_message_size'        => (isa => 'HundredInt', is => 'rw', default => 1000000);
-has 'max_messages_per_hour'   => (isa => 'PosInt',     is => 'rw', default => 1000000);
+has 'max_message_size'        => (isa => 'Moose::Type::HundredInt', is => 'rw', default => 1000000);
+has 'max_messages_per_hour'   => (isa => 'Moose::Type::PosInt',     is => 'rw', default => 1000000);
 
 # Initialize this hour's message count.
-has 'messages_sent_today'     => (isa => 'HashRef', is => 'ro', default => sub{{(localtime)[7] => {(localtime)[2] => 0}}}); 
+has 'messages_sent_today'     => (isa => 'HashRef', is => 'ro', default => sub{{(localtime)[7] => {(localtime)[2] => 0}}});
 
 
 #my %message_function : ATTR; # What is called if we are fed a new message once we are logged in.
@@ -284,7 +284,6 @@ safetey: 166
 sub BUILD {
     my ($self, $params) = @_;
 
-
     if($self->gtalk) { # Google settings we're auto-setting
         $self->server_host('gmail.com');
         $self->tls(1);
@@ -292,9 +291,6 @@ sub BUILD {
 
     # Message delay is inverse of out_messages_per_second
     $self->message_delay(1/$self->out_messages_per_second);
-
-    # server_host defaults fo server if not defined explicitly
-    $self->server_host($self->server) if(!$self->server_host);
 
     # Enforce all our safety restrictions here.
     if($self->safety_mode) {
@@ -310,7 +306,7 @@ sub BUILD {
         # Should not be responding to self messages to prevent loops.
         $self->ignore_self_messages(1);
     }
-    
+
     #Initialize the connection.
     $self->_init_jabber;
 }
@@ -330,13 +326,12 @@ sub _init_jabber {
 
     # Determine if the object already exists and if not, create it.
     DEBUG("new client object.");
-    if(!$self->jabber_client) { # If client was fed in for test?
+    if(!$self->jabber_client) {
         $self->jabber_client(Net::Jabber::Client->new);
     }
     my $connection = $self->jabber_client;
 
     DEBUG("Set the call backs.");
-
     $connection->PresenceDB(); # Init presence DB.
     $connection->RosterDB(); # Init Roster DB.
     $connection->SetCallBacks( 'message'  => $self->_callback_maker(\&_process_jabber_message)
@@ -375,12 +370,12 @@ sub _init_jabber {
         foreach my $result (@auth_result) {
             ERROR("$result");
         }
-        return;
+        die("Failed to re-connect: " . join("\n", @auth_result));
     }
 
     $connection->RosterRequest();
 
-    $self->client_session_id($connection->{SESSION}->{id}); 
+    $self->client_session_id($connection->{SESSION}->{id});
 
     DEBUG("Sending presence to tell world that we are logged in");
     $connection->PresenceSend();
@@ -469,7 +464,7 @@ sub Start {
         # Process and re-connect if you have to.
         my $reconnect_timeout = 1;
         eval {$self->Process($process_timeout)};
-        
+
         if($@) { #Assume the connection is down...
             my $message = "Disconnected from $self->server:$self->port"
                         . " as $self->username.";
@@ -958,7 +953,7 @@ sub _send_individual_message {
         # Send 1 panic message out to jabber if this is our last message before quieting down.
         return "Too many messages ($messages_this_hour)\n";
     }
-    
+
     if(!$self->IsConnected) {
         $subject = "" if(!defined $subject); # Keep warning messages quiet.
         $message_chunk = "" if(!defined $message_chunk); # Keep warning messages quiet.
