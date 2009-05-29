@@ -74,7 +74,7 @@ has 'messages_sent_today'     => (isa => 'HashRef', is => 'ro', default => sub{{
 
 
 #my %message_function : ATTR; # What is called if we are fed a new message once we are logged in.
-#my %bot_background_activity : ATTR; # What is called if we are fed a new message once we are logged in.
+#my %bot_background_function : ATTR; # What is called if we are fed a new message once we are logged in.
 #my %forum_join_time : ATTR;  # Tells us if we've parsed historical messages yet.
 #my %client_start_time :ATTR; # Track when we came online. Also used to determine if we're online.
 #my %process_timeout : ATTR;  # Time to take in process loop if no messages found
@@ -123,28 +123,21 @@ The object at present has the following enforced safeties as long as you do not 
 
 =over
 
-=item 1. Jabber client object is not directly accessible because the bot is an inside out object, forcing the user to use the Net::Jabber::Bot interface only
+=item 1. Limits messages per second, configurable at start up, (Max is 5 per second) by requiring a sleep timer in the message sending subroutine each time one is sent.
 
-=item 2. Limits messages per second, configurable at start up, (Max is 5 per second) by requiring a sleep timer in the message sending subroutine each time one is sent.
+=item 2. Endless loops of responding to self prevented by now allowing the bot message processing subroutine to know about messages from self
 
-=item 3. Endless loops of responding to self prevented by now allowing the bot message processing subroutine to know about messages from self
+=item 3. Forum join grace period to prevent bot from reacting to historical messages
 
-=item 4. Forum join grace period to prevent bot from reacting to historical messages
+=item 4. Configurable aliases the bot will respond to per forum
 
-=item 5. Configurable aliases the bot will respond to per forum
+=item 5. Limits maximum message size, preventing messages that are too large from being sent (largest configurable message size limit is 1000).
 
-=item 6. Limits maximum message size, preventing messages that are too large from being sent (largest configurable message size limit is 1000).
+=item 6. Automatic chunking of messages to split up large messages in message sending subroutine
 
-=item 7. Automatic chunking of messages to split up large messages in message sending subroutine
-
-=item 8. Limit on messages per hour. (max configurable limit of 125) Messages will alert in the log, but not ever be sent once the message limit is reached for that hour.
+=item 7. Limit on messages per hour. (max configurable limit of 125) Messages are visible via log4perl, but not ever be sent once the message limit is reached for that hour.
 
 =back
-
-=head1 EXPORT
-
-A list of subroutines that can be exported.  You can delete this section
-if you do not export anything, such as for a purely object-oriented module.
 
 =head1 FUNCTIONS
 
@@ -161,8 +154,8 @@ if you do not export anything, such as for a purely object-oriented module.
                                 , username => 'username'
                                 , password => 'pasword'
                                 , alias => 'cpan_bot'
-                                , message_callback => \&new_bot_message
-                                , background_activity => \&background_checks
+                                , message_function => \&new_bot_message
+                                , background_function => \&background_checks
                                 , loop_sleep_time => 15
                                 , process_timeout => 5
                                 , forums_and_responses => \%forum_list
@@ -183,7 +176,7 @@ The following initialization variables can be passed. Only marked variables are 
 
 =item B<safety_mode>
 
-    safety_mode = (1,0,'on','off')
+    safety_mode = (1,0)
 
 Determines if the bot safety features are turned on and enforced. This mode is on by default. Many of the safety features are here to assure you do not crash your favorite jabber server with floods, etc. DO NOT turn it off unless you're sure you know what you're doing (not just Sledge Hammer ceratin)
 
@@ -216,7 +209,7 @@ This will be your nickname in rooms, as well as the login resource (which can't 
 A hash ref which lists the forum names to join as the keys and the values are an array reference to a list of strings they are supposed to be responsive to.
 The array is order sensitive and an empty string means it is going to respond to all messages in this forum. Make sure you list this last.
 
-The found 'response string' is assumed to be at the beginning of the message. The message_callback function will be called with the modified string.
+The found 'response string' is assumed to be at the beginning of the message. The message_funtion function will be called with the modified string.
 
 alias = jbot:, attention:
 
@@ -226,17 +219,17 @@ alias = jbot:, attention:
 
     passed to callback: 'help'
 
-=item B<message_callback>
+=item B<message_function>
 
 The subroutine the bot will call when a new message is recieved by the bot. Only called if the bot's logic decides it's something you need to know about.
 
-=item B<background_activity>
+=item B<background_function>
 
 The subroutine the bot will call when every so often (loop_sleep_time) to allow you to do background activities outside jabber stuff (check logs, web pages, etc.)
 
 =item B<loop_sleep_time>
 
-Frequency background activity is called.
+Frequency background function is called.
 
 =item B<process_timeout>
 
