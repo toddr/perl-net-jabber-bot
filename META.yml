@@ -1,20 +1,44 @@
 --- #YAML:1.0
-name:                Net-Jabber-Bot
-version:             2.1.0
-abstract:            Automated Bot creation with safeties
-license:             ~
-generated_by:   Todd Rinaldo <toddr@null.net>
-distribution_type:   module
-requires:
-    Class::Std:                    0
-    Log::Log4perl:                 0
-    Net::Jabber:                   2
-    Test::More:                    0
-meta-spec:
-        licence:        http://dev.perl.org/licenses/
-        homepage:       http://perl-net-jabber-bot.googlecode.com/
-        bugtracker:     http://code.google.com/p/perl-net-jabber-bot/issues/list
-        repository:     http://perl-net-jabber-bot/svn/trunk/
-        MailingList:    http://groups.google.com/group/perl-net-jabber-bot
+name:               Net-Jabber-Bot
+version:            2.1.0
+abstract:           Automated Bot creation with safeties
 author:
     - Todd E Rinaldo <perl-net-jabber-bot@googlegroups.com>
+license:            perl
+distribution_type:  module
+configure_requires:
+    ExtUtils::MakeMaker:  0
+build_requires:
+    ExtUtils::MakeMaker:  0
+    FindBin:              0
+    lib:                  0
+    Test::More:           0
+    Test::NoWarnings:     0
+requires:
+    FindBin:              0
+    lib:                  0
+    Log::Log4perl:        0
+    Moose:                0
+    Moose::Util::TypeConstraints:  0
+    Net::Jabber:          2
+    Test::More:           0
+    Test::NoWarnings:     0
+    Time::HiRes:          0
+    version:              0
+resources:
+    bugtracker:   http://code.google.com/p/perl-net-jabber-bot/issues/list
+    homepage:     http://code.google.com/p/perl-net-jabber-bot/
+    license:      http://dev.perl.org/licenses/
+    MailingList:  http://groups.google.com/group/perl-net-jabber-bot
+    repository:   http://perl-net-jabber-bot.googlecode.com/svn
+no_index:
+    directory:
+        - t
+        - inc
+generated_by:       ExtUtils::MakeMaker version 6.50
+meta-spec:
+    url:      http://module-build.sourceforge.net/META-spec-v1.4.html
+    version:  1.4
+recommends:
+    Test::Pod:            1.14
+    Test::Pod::Coverage:  1.04

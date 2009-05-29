@@ -94,11 +94,11 @@ Net::Jabber::Bot - Automated Bot creation with safeties
 
 =head1 VERSION
 
-Version 2.1.0
+Version 2.1.1
 
 =cut
 
-our $VERSION = '2.1.0';
+our $VERSION = '2.1.1';
 
 =head1 SYNOPSIS
 
@@ -332,7 +332,7 @@ sub _init_jabber {
                               ,'iq'       => $self->_callback_maker(\&_jabber_in_iq_message)
                               );
 
-    DEBUG("Connect. hostname => $self->server() , port => $self->port()");
+    DEBUG("Connect. hostname => " . $self->server . ", port => " . $self->port);
     my %client_connect_hash = (
         hostname => $self->server,
         port => $self->port,
@@ -347,7 +347,7 @@ sub _init_jabber {
        return;
     }
 
-    DEBUG("Logging in... as user $self->username / $self->alias");
+    DEBUG("Logging in... as user " . $self->username . " / " . $self->alias);
 
     my $sid = $connection->{SESSION}->{id};
     $connection->{STREAM}->{SIDS}->{$sid}->{hostname} = $self->server_host;
@@ -359,7 +359,7 @@ sub _init_jabber {
                                             );
 
     if(!defined $auth_result[0] || $auth_result[0] ne "ok") {
-        ERROR("ERROR: Authorization failed: for $self->username / $self->alias");
+        ERROR("Authorization failed: for " . $self->username . " / " . $self->alias);
         foreach my $result (@auth_result) {
             ERROR("$result");
         }
@@ -382,7 +382,7 @@ sub _init_jabber {
         $self->JoinForum($forum);
     }
 
-    INFO("Connected to server '$self->server' successfully");
+    INFO("Connected to server '" . $self->server . "' successfully");
     $self->connect_time(time); # Track when we came online.
     return 1;
 }
@@ -401,14 +401,16 @@ sub JoinForum {
     my $self = shift;
     my $forum_name = shift;
 
-    DEBUG("Joining $forum_name on $self->conference_server as $self->alias");
+    DEBUG("Joining $forum_name on " . $self->conference_server . " as " . $self->alias);
+#    $forum_name =~ s/ /\|/g; # Spaces into pipes for forum name
+
     $self->jabber_client->MUCJoin(room    => $forum_name,
                                   server => $self->conference_server,
                                   nick   => $self->alias,
                                   );
 
     $self->forum_join_time->{$forum_name} = time;
-    DEBUG("Sleeping $self->message_delay seconds");
+    DEBUG("Sleeping " . $self->message_delay . " seconds");
     Time::HiRes::sleep $self->message_delay;
 }
 
@@ -459,9 +461,10 @@ sub Start {
         eval {$self->Process($process_timeout)};
 
         if($@) { #Assume the connection is down...
-            my $message = "Disconnected from $self->server:$self->port"
-                        . " as $self->username.";
+            my $message = "Disconnected from " . $self->server . ":" . $self->port
+                        . " as " . $self->username;
             ERROR("$message Reconnecting...");
+            sleep 5; # TODO: Make re-connect time flexible somehow
             $self->ReconnectToServer();
         }
 
@@ -575,11 +578,10 @@ sub _process_jabber_message {
     my $time_now = time;
     if($self->connect_time > $time_now - $grace_period
        || (defined $self->forum_join_time->{$from} && $self->forum_join_time->{$from} > $time_now - $grace_period)) {
-        my $cond1 = "$self->connect_time > $time_now - $grace_period";
-        my $cond2 = "$self->forum_join_time->{$from} > $time_now - $grace_period";
-        DEBUG("Ignoring messages cause I'm in startup for forum $from\n"
-              . "$cond1\n"
-            . "$cond2");
+        my $cond1 = $self->connect_time . " > $time_now - $grace_period";
+        my $cond2 = $self->forum_join_time->{$from} || 'undef'
+                    . " > $time_now - $grace_period";
+        DEBUG("Ignoring messages cause I'm in startup for forum $from\n$cond1\n$cond2");
         return; # Ignore messages the first few seconds.
     }
 
@@ -705,7 +707,7 @@ sub _jabber_in_iq_message {
     DEBUG("IQ Message:" . $iq->GetXML());
 #    my $from = $iq->GetFrom();DEBUG("From=$from");
 #    my $type = $iq->GetType();DEBUG("Type=$type");
-    my $query = $iq->GetQuery();DEBUG("query=$query");
+    my $query = $iq->GetQuery();#DEBUG("query=" . Dumper($query));
     my $xmlns = $query->GetXMLNS();DEBUG("xmlns=$xmlns");
     my $iqReply;
 
@@ -974,13 +976,13 @@ sub _send_individual_message {
                      , subject => $subject
                      );
 
-    DEBUG("Sleeping $self->message_delay after sending message.");
+    DEBUG("Sleeping " . $self->message_delay . " after sending message.");
     Time::HiRes::sleep $self->message_delay; #Throttle messages.
 
     if($messages_this_hour == $self->max_messages_per_hour) {
         $self->jabber_client->MessageSend(to => $recipient
                          , body => "Cannot send more messages this hour. "
-                         . "$messages_this_hour of $self->max_messages_per_hour already sent."
+                         . "$messages_this_hour of " . $self->max_messages_per_hour . " already sent."
                          , type => $message_type
                          );
     }

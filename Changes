@@ -1,5 +1,10 @@
 Revision history for Net-Jabber-Bot
 
+2.1.1 
+Add proper meta data into makefile.pl
+Cleanup debug messages. Used to be able to do them inline but moose subs don't call inside a string any more.
+
+
 2.1.0 
 MOOSE!!!
 
