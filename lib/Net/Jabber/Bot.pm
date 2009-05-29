@@ -176,7 +176,7 @@ The following initialization variables can be passed. Only marked variables are 
 
 =item B<safety_mode>
 
-    safety_mode = (1,0,'on','off')
+    safety_mode = (1,0)
 
 Determines if the bot safety features are turned on and enforced. This mode is on by default. Many of the safety features are here to assure you do not crash your favorite jabber server with floods, etc. DO NOT turn it off unless you're sure you know what you're doing (not just Sledge Hammer ceratin)
 
