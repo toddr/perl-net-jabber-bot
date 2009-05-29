@@ -94,11 +94,11 @@ Net::Jabber::Bot - Automated Bot creation with safeties
 
 =head1 VERSION
 
-Version 2.1.1
+Version 2.1.2
 
 =cut
 
-our $VERSION = '2.1.1';
+our $VERSION = '2.1.2';
 
 =head1 SYNOPSIS
 
@@ -277,6 +277,26 @@ safetey: 166
 sub BUILD {
     my ($self, $params) = @_;
 
+    # Deal with legacy bug
+    if($params->{background_activity} || $params->{message_callback}) {
+        my $warn_message = "\n\n" 
+                          . "*" x 70 . "\n"
+                          . "WARNING!!! You're using old parameters for your bot initialization\n"
+                          . "'message_callback' should be changed to 'message_function'\n"
+                          . "'background_activity' should be changed to 'background_function'\n"
+                          . "I'm correcting this, but you should fix your code\n"
+                          . "*" x 70 . "\n"
+                          . "\n\n";
+        warn($warn_message);
+        WARN($warn_message);
+
+        $self->background_function($params->{background_activity})
+            if(!$self->background_function && $params->{background_activity});
+        $self->message_function($params->{message_callback})
+            if(!$self->message_function && $params->{message_callback});
+        sleep 30;
+    } 
+    
     if($self->gtalk) { # Google settings we're auto-setting
         $self->server_host('gmail.com');
         $self->tls(1);
