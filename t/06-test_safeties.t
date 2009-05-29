@@ -3,7 +3,7 @@
 use strict;
 use warnings;
 
-use Test::More tests => 119;
+use Test::More tests => 129;
 use Net::Jabber::Bot;
 
 # stuff for mock client object
@@ -39,9 +39,10 @@ my $max_messages_per_hour = ($flood_messages_to_send*2
 			     );
 
 # Globals we'll keep track of variables we use each test.
-our $messages_seen = 0;
-our $initial_message_count = 0;
-our $start_time = time;
+our ($messages_seen, $initial_message_count, $start_time); 
+$messages_seen = 0;
+$initial_message_count = 0;
+$start_time = time;
 
 ok(1, "Creating Net::Jabber::Bot object with Mock client library asserted in place of Net::Jabber::Client");
 my $bot = Net::Jabber::Bot->new({
@@ -51,8 +52,8 @@ my $bot = Net::Jabber::Bot->new({
 				 , username => 'test_username'
 				 , password => 'test_pass'
 				 , alias => $bot_alias
-				 , message_callback => \&new_bot_message   # Called if new messages arrive.
-				 , background_activity => \&background_checks # What the bot does outside jabber.
+                 , message_function => \&new_bot_message   # Called if new messages arrive.
+                 , background_function => \&background_checks # What the bot does outside jabber.
 				 , loop_sleep_time => $loop_sleep_time # Minimum time before doing background function.
 				 , process_timeout => $server_info_timeout # Time to wait for new jabber messages before doing background stuff
 				 , forums_and_responses => \%forums_and_responses
@@ -64,14 +65,18 @@ my $bot = Net::Jabber::Bot->new({
 				});
 
 isa_ok($bot, "Net::Jabber::Bot");
+is($bot->message_delay, 0.2, "Message delay is set right to .20 seconds");
+is($bot->max_messages_per_hour, $max_messages_per_hour, "Max messages per hour ($max_messages_per_hour) didn't get messed with by safeties");
+is($bot->get_safety_mode, 1, "Validate safety mode is on")
+    or die("Safety mode is not turning on. Tests will not be valid");
 
-ok(1, "Sleeping 22 seconds to make sure we get past initializtion");
-ok((sleep 22) > 20, "Making sure the bot get's past initialization (sleep 22)");
+is($bot->forum_join_grace, 10, "Forum Grace is 10 seconds as expected");
+ok(1, "Sleeping 12 seconds to make sure we get past initializtion");
+ok((sleep 12) > 10, "Making sure the bot get's past initialization (sleep 12)");
 process_bot_messages();
 
-ok(1, "Testing Group Message bursting is not possible");
+start_new_test("Testing Group Message bursting is not possible");
 {
-    start_new_test(); # Reset all my counter variables.
     for my $counter (1..$flood_messages_to_send) {
 	my $result = $bot->SendGroupMessage($forum1, "Testing message speed $counter");
 	diag("got return value $result") if(defined $result);
@@ -88,9 +93,8 @@ ok(1, "Testing Group Message bursting is not possible");
 }
 
 
-ok(1, "Test PERSONAL_ADDRESS Message bursting is not possible");
- {
-     start_new_test();
+start_new_test("Test PERSONAL_ADDRESS Message bursting is not possible");
+{
      for my $counter (1..$flood_messages_to_send) {
 	 my $result =  $bot->SendPersonalMessage($personal_address, "Testing personal_address message speed $counter");
 	 diag("got return value $result") if(defined $result);
@@ -112,10 +116,11 @@ TODO: { # Need a way to test for historical - up top or in diff code?
 
 cmp_ok($bot->respond_to_self_messages( ), '==', 1, "no pass to respond_to_self_messages is 1");
 cmp_ok($bot->respond_to_self_messages(0), '==', 0, "Ignore Self Messages");
-cmp_ok($bot->respond_to_self_messages(2), '==', 2, "Respond to Self Messages");
+cmp_ok($bot->respond_to_self_messages(2), '==', 1, "Respond to Self Messages");
+cmp_ok($bot->ignore_self_messages, '==', 0, "Moose variable is set right for ignore_self_messages");
 
-# Test a successful message
-start_new_test();
+
+start_new_test("Test a successful message");
 ok(!defined $bot->SendPersonalMessage($personal_address, "Testing message to myself"), "Testing message to myself");
 process_bot_messages();
 verify_messages_sent(1);
@@ -137,9 +142,9 @@ cmp_ok(length($long_message), '>=' , $max_message_size , "Length of message is g
 
 # Test messages that will be split:
 {
-     start_new_test();
-     cmp_ok($bot->respond_to_self_messages( ), '==', 1, "Make sure I'm responding to self messages.");
+     cmp_ok($bot->respond_to_self_messages, '==', 1, "Make sure I'm responding to self messages.");
 
+    start_new_test("Split Testing for forum messages");
      # Group Test.
      ok(1, "Sending long message of " . length($long_message) . " bytes to forum");
      my $result = $bot->SendGroupMessage($forum1, $long_message);
@@ -148,23 +153,20 @@ cmp_ok(length($long_message), '>=' , $max_message_size , "Length of message is g
      process_bot_messages();
      cmp_ok($messages_seen, '>=',$long_message_test_messages, "Saw $long_message_test_messages messages so we know it was chunked into messages smaller than $max_message_size");
 
-     start_new_test();
+     start_new_test("Test subject too long error");
      my $subject_change_result = $bot->SetForumSubject($forum1, $long_message);
      is($subject_change_result, "Subject is too long!", 'Verify long subject changes are rejected.');
      verify_messages_sent(0);
      verify_messages_seen(0, "Bot should not have sent anything to the server.");
 }
 
-# Test a successful message with a panic
-start_new_test();
+start_new_test("Test a successful message with a panic");
 ok(!defined $bot->SendPersonalMessage($personal_address, "Testing message to myself"), "Testing message to myself");
 process_bot_messages();
 verify_messages_sent(1);
 verify_messages_seen(2, "With Panic");
 
-
-# Test message limits
-start_new_test();
+start_new_test("Test message limits");
 my $failure_message = $bot->SendPersonalMessage($personal_address, "Testing message to myself that should fail");
 ok(defined $failure_message, "Testing hourly message limits (failure to send)");
 process_bot_messages();
@@ -174,7 +176,7 @@ verify_messages_seen(0, "Rejected by bot");
 exit;
 
 sub new_bot_message {
-    our $messages_seen += 1;
+    $messages_seen += 1;
 }
 sub background_checks {}
 
@@ -198,9 +200,13 @@ sub verify_messages_seen {
 }
 
 sub start_new_test {
-    our $initial_message_count = $bot->get_messages_this_hour();
-    our $messages_seen = 0;
-    our $start_time = time;
+    my $comment = shift;
+    $comment = "no description" if(!defined $comment);
+    ok(1, "****** New test: $comment ******");  
+
+    $initial_message_count = $bot->get_messages_this_hour();
+    $messages_seen = 0;
+    $start_time = time;
 }
 
 

@@ -305,14 +305,14 @@ sub BUILD {
         $self->max_message_size(1000) if($self->max_message_size > 1000);
 
         # More than 4,000 messages a day is a little excessive.
-        $self->max_messages_per_hour(125) if($self->max_message_size > 166);
+        $self->max_messages_per_hour(125) if($self->max_messages_per_hour > 166);
 
         # Should not be responding to self messages to prevent loops.
         $self->ignore_self_messages(1);
     }
     
     #Initialize the connection.
-    $self->_InitJabber;
+    $self->_init_jabber;
 }
 
 # Return a code reference that will pass self in addition to arguements passed to callback code ref.
@@ -325,7 +325,7 @@ sub _callback_maker {
 }
 
 # Creates client object and manages connection. Called on new but also called by re-connect
-sub _InitJabber {
+sub _init_jabber {
     my $self = shift;
 
     # Determine if the object already exists and if not, create it.
@@ -339,9 +339,9 @@ sub _InitJabber {
 
     $connection->PresenceDB(); # Init presence DB.
     $connection->RosterDB(); # Init Roster DB.
-    $connection->SetCallBacks( 'message'  => $self->_callback_maker(\&ProcessJabberMessage)
-                              ,'presence' => $self->_callback_maker(\&JabberPresenceMessage)
-                              ,'iq'       => $self->_callback_maker(\&InIQ)
+    $connection->SetCallBacks( 'message'  => $self->_callback_maker(\&_process_jabber_message)
+                              ,'presence' => $self->_callback_maker(\&_jabber_presence_message)
+                              ,'iq'       => $self->_callback_maker(\&_jabber_in_iq_message)
                               );
 
     DEBUG("Connect. hostname => $self->server() , port => $self->port()");
@@ -550,13 +550,14 @@ sub IsConnected {
     return $self->connect_time;
 }
 
+# TODO: ***NEED VERY GOOD DOCUMENTATION HERE*****
 =item B<ProcessJabberMessage> - DO NOT CALL
 
-Handles incoming messages ***NEED VERY GOOD DOCUMENTATION HERE***** (TODO)
+Handles incoming messages.   
 
 =cut
 
-sub ProcessJabberMessage {
+sub _process_jabber_message {
     my $self = shift;
     DEBUG("ProcessJabberMessage called");
 
@@ -586,11 +587,11 @@ sub ProcessJabberMessage {
     my $time_now = time;
     if($self->connect_time > $time_now - $grace_period
        || (defined $self->forum_join_time->{$from} && $self->forum_join_time->{$from} > $time_now - $grace_period)) {
-    my $cond1 = "$self->connect_time > $time_now - $grace_period";
-    my $cond2 = "$self->forum_join_time->{$from} > $time_now - $grace_period";
-    DEBUG("Ignoring messages cause I'm in startup for forum $from\n"
-          . "$cond1\n"
-          . "$cond2");
+        my $cond1 = "$self->connect_time > $time_now - $grace_period";
+        my $cond2 = "$self->forum_join_time->{$from} > $time_now - $grace_period";
+        DEBUG("Ignoring messages cause I'm in startup for forum $from\n"
+              . "$cond1\n"
+            . "$cond2");
         return; # Ignore messages the first few seconds.
     }
 
@@ -605,12 +606,12 @@ sub ProcessJabberMessage {
     }
 
     # Are these my own messages?
-    if($self->ignore_self_messages) {
-    my $bot_alias = $self->get_alias();
-    if(defined $resource && $bot_alias eq $resource) { # Ignore my own messages.
-        DEBUG("Ignoring message from self...\n");
-        return;
-    }
+    if($self->ignore_self_messages ) { # TODO: || $self->safety_mode (this breaks tests in 06?)
+        my $bot_alias = $self->get_alias();
+        if(defined $resource && $bot_alias eq $resource) { # Ignore my own messages.
+            DEBUG("Ignoring message from self...\n");
+            return;
+        }
     }
 
     # Determine if this message was addressed to me. (groupchat only)
@@ -623,7 +624,7 @@ sub ProcessJabberMessage {
             my $qm_address_type = quotemeta($address_type);
             next if($body !~ m/^\s*$qm_address_type\s*(\S.*)$/);
             $request = $1;
-        $bot_address_from = $address_type;
+            $bot_address_from = $address_type;
             last; # do not need to loop any more.
         }
         return if(!defined $request);
@@ -687,7 +688,7 @@ sub get_responses {
 
 
 # Supposed to send version requests to other user/resources. *** NOT WORKING YET ****
-sub _RequestVersion {
+sub _request_version {
     my $self = shift;
 
     my $iq = new Net::XMPP::IQ();
@@ -701,13 +702,13 @@ sub _RequestVersion {
     $self->jabber_client->Send($iq)
 }
 
-=item B<InIQ> - DO NOT CALL
+=item B<_jabber_in_iq_message> - DO NOT CALL
 
 Called when the client receives new messages during Process of this type.
 
 =cut
 
-sub InIQ {
+sub _jabber_in_iq_message {
     my $self = shift;
 
     my $session_id = shift;
@@ -742,14 +743,14 @@ sub InIQ {
 #    INFO("IQ from $from ($type). XMLNS: $xmlns");
 }
 
-=item B<JabberPresenceMessage> - DO NOT CALL
+=item B<_jabber_presence_message> - DO NOT CALL
 
 Called when the client receives new presence messages during Process.
 Mostly we are just pushing the data down into the client DB for later processing.
 
 =cut
 
-sub JabberPresenceMessage {
+sub _jabber_presence_message {
     my $self = shift;
 
     my $session_id = shift;
@@ -800,7 +801,7 @@ sub respond_to_self_messages {
     $setting = 1 if(!defined $setting);
 
     $self->ignore_self_messages(!$setting);
-    return $setting;
+    return !!$setting;
 }
 
 =item B<get_messages_this_hour>
@@ -818,7 +819,7 @@ sub get_messages_this_hour {
     my $yday = (localtime)[7];
     my $hour = (localtime)[2];
     my $messages_this_hour = $self->messages_sent_today->{$yday}->{$hour};
-    return $messages_this_hour;
+    return $messages_this_hour || 0; # Assure it's not undef to avoid math warnings
 }
 
 =item B<get_safety_mode>
@@ -831,13 +832,14 @@ sub get_safety_mode {
     my $self = shift;
 
     # Must be in safety mode and all thresholds met.
-    my $mode = !!($self->safety_mode
+    my $mode = $self->safety_mode
           && $self->message_delay >= 1/5
           && $self->max_message_size <= 1000
-          && $self->max_message_size <= 166
+          && $self->max_messages_per_hour <= 166
           && $self->ignore_self_messages
-         );
-    return $mode;
+         ;
+         
+    return $mode || 0;
 }
 
 =item B<SendGroupMessage>
@@ -904,7 +906,7 @@ sub SendJabberMessage {
     DEBUG("Max message = $max_size. Splitting...") if($#message_chunks > 0);
     my $return_value;
     foreach my $message_chunk (@message_chunks) {
-        my $msg_return = $self->_SendIndividualMessage($recipient, $message_chunk, $message_type, $subject);
+        my $msg_return = $self->_send_individual_message($recipient, $message_chunk, $message_type, $subject);
         if(defined $msg_return) {
             $return_value .= $msg_return;
         }
@@ -912,14 +914,14 @@ sub SendJabberMessage {
     return $return_value;
 }
 
-# $self->_SendIndividualMessage($recipient, $message_chunk, $message_type, $subject);
+# $self->_send_individual_message($recipient, $message_chunk, $message_type, $subject);
 # Private subroutine only called directly by SetForumSubject and SendJabberMessage.
 # There are a bunch of fancy things this does, but the important things are:
 # 1. sleep a minimum of .2 seconds every message
 # 2. Make sure we have not sent too many messages this hour and block sends if they are attempted over a certain limit (max limit is 125)
 # 3. Strip out special characters that will get us booted from the server.
 
-sub _SendIndividualMessage {
+sub _send_individual_message {
     my $self = shift;
 
     my $recipient = shift;
@@ -1014,11 +1016,11 @@ sub SetForumSubject {
     if(length $subject > $self->max_message_size) {
     my $subject_len = length($subject);
     ERROR("Someone tried to send a subject message $subject_len bytes long!");
-    my $subject = substr($subject, 0, self->max_message_size);
+    my $subject = substr($subject, 0, $self->max_message_size);
     DEBUG("Truncated subject: $subject");
     return "Subject is too long!";
     }
-    $self->_SendIndividualMessage($recipient, "Setting subject to $subject", 'groupchat', $subject);
+    $self->_send_individual_message($recipient, "Setting subject to $subject", 'groupchat', $subject);
 
     return;
 }
