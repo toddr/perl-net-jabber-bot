@@ -1,5 +1,8 @@
 Revision history for Net-Jabber-Bot
 
+2.1.3
+Tests were failing if people didn't have Config::Std installed which is only used for Author tests
+
 2.1.2
 Added warning message for legacy users initializing with message_callback or background_activity.
 
