@@ -562,7 +562,7 @@ sub IsConnected {
 }
 
 # TODO: ***NEED VERY GOOD DOCUMENTATION HERE*****
-=item B<ProcessJabberMessage> - DO NOT CALL
+=item B<_process_jabber_message> - DO NOT CALL
 
 Handles incoming messages.   
 
@@ -570,7 +570,7 @@ Handles incoming messages.
 
 sub _process_jabber_message {
     my $self = shift;
-    DEBUG("ProcessJabberMessage called");
+    DEBUG("_process_jabber_message called");
 
     my $session_id = shift;
     my $message = shift;
@@ -632,11 +632,12 @@ sub _process_jabber_message {
         my $request;
         foreach my $address_type (@aliases_to_respond_to) {
             my $qm_address_type = quotemeta($address_type);
-            next if($body !~ m/^\s*$qm_address_type\s*(\S.*)$/);
+            next if($body !~ m/^\s*$qm_address_type\s*(\S.*)$/ms);
             $request = $1;
             $bot_address_from = $address_type;
             last; # do not need to loop any more.
         }
+        DEBUG("Message not relevant to bot");
         return if(!defined $request);
         $body = $request;
     }
