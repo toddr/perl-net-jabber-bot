@@ -593,7 +593,7 @@ sub _process_jabber_message {
 #    my $message_date_text = $message->GetTimeStamp(); # Since we're not using the data, we'll turn this off since it crashes gtalk clients aparently?
     #    my $message_date = UnixDate($message_date_text, "%s") - 1*60*60; # Convert to EST from CST;
 
-    # Ignore any messages within 20 seconds of start or join of that forum
+    # Ignore any messages within 10 seconds of start or join of that forum
     my $grace_period = $self->forum_join_grace;
     my $time_now = time;
     if($self->connect_time > $time_now - $grace_period
