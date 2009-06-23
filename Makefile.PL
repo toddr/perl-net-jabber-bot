@@ -10,8 +10,8 @@ WriteMakefile(
     PL_FILES            => {},
     ($ExtUtils::MakeMaker::VERSION >= 6.3002 ? ('LICENSE'        => 'perl', ) : ()),
     PREREQ_PM => {
-        'Moose' => 0,  # Object Base
-        'Moose::Util::TypeConstraints' => 0, # New variable types
+        'Moose' => 0.82,  # Object Base
+        'MooseX::Types' => 0.12, # New variable types
         'Time::HiRes' => 0, # Partial second sleeping
         'Net::Jabber' => 2.0,  # The whole thing is based on Net::Jabber. 
         'Log::Log4perl' => 0,  # We use log4perl. not sure how bad this'll screw people over... should consider removal later or make it optional
@@ -36,9 +36,9 @@ WriteMakefile(
         },
         resources => {
             license => 'http://dev.perl.org/licenses/',
-            homepage => 'http://code.google.com/p/perl-net-jabber-bot/',
+            homepage => 'http://wiki.github.com/toddr/perl-net-jabber-bot',
             bugtracker => 'http://code.google.com/p/perl-net-jabber-bot/issues/list',
-            repository => 'http://perl-net-jabber-bot.googlecode.com/svn',
+            repository => 'http://github.com/toddr/perl-net-jabber-bot/tree/master',
             MailingList => 'http://groups.google.com/group/perl-net-jabber-bot',
         },
     },

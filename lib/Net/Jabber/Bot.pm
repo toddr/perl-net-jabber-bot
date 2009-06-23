@@ -1,73 +1,66 @@
 package Net::Jabber::Bot;
 
-use strict;
-use warnings;
+use Moose;
+use MooseX::Types 
+    -declare => [qw( JabberClientObject PosInt PosNum HundredInt )];
+
+# import builtin types
+use MooseX::Types::Moose qw/Int HashRef Str Maybe ArrayRef Bool CodeRef Object Num/;
 
 use version;
-
 use Net::Jabber;
 use Time::HiRes;
 use Log::Log4perl qw(:easy);
 #use Data::Dumper; #For testing only.
-use Moose;
-use Moose::Util::TypeConstraints;
 
-coerce 'Bool'
-    => from 'Str'
-            => via {($_ =~ m/(^on$)|(^true$)/i) + 0}; # True if it's on or true. Otherwise false.
 
-subtype 'Moose::Type::JabberClientObject'    => as 'Object' => where { $_->isa('Net::Jabber::Client') };
+coerce Bool, from Str, 
+    via {($_ =~ m/(^on$)|(^true$)/i) + 0}; # True if it's on or true. Otherwise false.
 
-subtype 'Moose::Type::PosInt'
-      => as 'Int'
-      => where { $_ > 0 };
+subtype JabberClientObject, as Object, where { $_->isa('Net::Jabber::Client') };
 
-subtype 'Moose::Type::PosNum'
-      => as 'Num'
-      => where { $_ > 0 };
+subtype PosInt,     as Int, where { $_ > 0 };
+subtype PosNum,     as Num, where { $_ > 0 };
+subtype HundredInt, as Num,  where { $_ > 100 };
 
-subtype 'Moose::Type::HundredInt'
-      => as 'Num'
-      => where { $_ > 100 };
-
-has jabber_client               => (isa => 'Maybe[Moose::Type::JabberClientObject]',
+has jabber_client               => (isa => Maybe[JabberClientObject],
                                     is => 'rw',
                                     default => sub {Net::Jabber::Client->new});
 #my %connection_hash : ATTR; # Keep track of connection options fed to client.
 
-has 'client_session_id'   => (isa => 'Str', is => 'rw');
-has 'connect_time'        => (isa => 'Moose::Type::PosInt', is => 'rw', default => 9_999_999_999);
-has 'forum_join_grace'    => (isa => 'Moose::Type::PosNum', is => 'rw', default => 10);
-has 'server_host'         => (isa => 'Str', is => 'rw', lazy => 1, default => sub{shift->server });
-has 'server'              => (isa => 'Str', is => 'rw');
-has 'port'                => (isa => 'Moose::Type::PosInt', is => 'rw', default => 5222);
-has 'tls'                 => (isa => 'Bool', is => 'rw');
-has 'conference_server'   => (isa => 'Str', is => 'rw');
-has 'username'            => (isa => 'Str', is => 'rw');
-has 'password'            => (isa => 'Str', is => 'rw');
-has 'alias'               => (isa => 'Str', is => 'rw', default => sub{'net_jabber_bot'});
-has 'message_function'    => (isa => 'Maybe[CodeRef]', is => 'rw', default => sub{undef});
-has 'background_function' => (isa => 'Maybe[CodeRef]', is => 'rw', default => sub{undef});
-has 'loop_sleep_time'     => (isa => 'Moose::Type::PosNum', is => 'rw', default => 5);
-has 'process_timeout'     => (isa => 'Moose::Type::PosNum', is => 'rw', default => 5);
-has 'from_full'           => (isa => 'Str', is => 'rw', default => sub{my $self = shift;
+has 'client_session_id'   => (isa => Str, is => 'rw');
+has 'connect_time'        => (isa => PosInt, is => 'rw', default => 9_999_999_999);
+has 'forum_join_grace'    => (isa => PosNum, is => 'rw', default => 10);
+has 'server_host'         => (isa => Str, is => 'rw', lazy => 1, default => sub{shift->server });
+has 'server'              => (isa => Str, is => 'rw');
+has 'port'                => (isa => PosInt, is => 'rw', default => 5222);
+has 'tls'                 => (isa => Bool, is => 'rw');
+has 'conference_server'   => (isa => Str, is => 'rw');
+has 'username'            => (isa => Str, is => 'rw');
+has 'password'            => (isa => Str, is => 'rw');
+has 'alias'               => (isa => Str, is => 'rw', default => sub{'net_jabber_bot'});
+has 'message_function'    => (isa => Maybe[CodeRef], is => 'rw', default => sub{undef});
+has 'background_function' => (isa => Maybe[CodeRef], is => 'rw', default => sub{undef});
+has 'loop_sleep_time'     => (isa => PosNum, is => 'rw', default => 5);
+has 'process_timeout'     => (isa => PosNum, is => 'rw', default => 5);
+has 'from_full'           => (isa => Str, is => 'rw', default => sub{my $self = shift;
                                                                        $self->username .
                                                                        '@' .
                                                                        $self->server .
                                                                        '/' .
                                                                        $self->alias});
 
-has 'safety_mode'            => (isa => 'Bool', is => 'rw', default => 1, coerce => 1);
-has 'gtalk'                  => (isa => 'Bool', is => 'rw', default => 0, coerce => 1);
-has 'ignore_server_messages' => (isa => 'Bool', is => 'rw', default => 1, coerce => 1);
-has 'ignore_self_messages'   => (isa => 'Bool', is => 'rw', default => 1, coerce => 1);
-has 'forums_and_responses'   => (isa => 'HashRef[ArrayRef[Str]]', is => 'rw'); # List of forums we're in and the strings we monitor for.
-has 'forum_join_time'        => (isa => 'HashRef[Int]', is => 'rw', default => sub{{}}); # List of when we joined each forum
-has 'out_messages_per_second' => (isa => 'Moose::Type::PosNum', is => 'rw', default => sub{5});
-has 'message_delay'           => (isa => 'Moose::Type::PosNum', is => 'rw', default => sub {1/5});
+has 'safety_mode'            => (isa => Bool, is => 'rw', default => 1, coerce => 1);
+has 'gtalk'                  => (isa => Bool, is => 'rw', default => 0, coerce => 1);
+has 'ignore_server_messages' => (isa => Bool, is => 'rw', default => 1, coerce => 1);
+has 'ignore_self_messages'   => (isa => Bool, is => 'rw', default => 1, coerce => 1);
+has 'forums_and_responses'   => (isa => HashRef[ArrayRef[Str]], is => 'rw'); # List of forums we're in and the strings we monitor for.
+has 'forum_join_time'        => (isa => HashRef[Int], is => 'rw', default => sub{{}}); # List of when we joined each forum
+has 'out_messages_per_second' => (isa => PosNum, is => 'rw', default => sub{5});
+has 'message_delay'           => (isa => PosNum, is => 'rw', default => sub {1/5});
 
-has 'max_message_size'        => (isa => 'Moose::Type::HundredInt', is => 'rw', default => 1000000);
-has 'max_messages_per_hour'   => (isa => 'Moose::Type::PosInt',     is => 'rw', default => 1000000);
+has 'max_message_size'        => (isa => HundredInt, is => 'rw', default => 1000000);
+has 'max_messages_per_hour'   => (isa => PosInt,     is => 'rw', default => 1000000);
 
 # Initialize this hour's message count.
 has 'messages_sent_today'     => (isa => 'HashRef', is => 'ro', default => sub{{(localtime)[7] => {(localtime)[2] => 0}}});
@@ -94,11 +87,11 @@ Net::Jabber::Bot - Automated Bot creation with safeties
 
 =head1 VERSION
 
-Version 2.1.3
+Version 2.1.4
 
 =cut
 
-our $VERSION = '2.1.3';
+our $VERSION = '2.1.4';
 
 =head1 SYNOPSIS
 
@@ -1188,4 +1181,8 @@ under the same terms as Perl itself.
 
 =cut
 
+# We aren't making the object immutable because we new the object once and only once...
+#__PACKAGE__->meta->make_immutable;
+no Moose;
+no MooseX::Types;
 1; # End of Net::Jabber::Bot
