@@ -10,6 +10,7 @@ use MooseX::Types::Moose qw/Int HashRef Str Maybe ArrayRef Bool CodeRef Object N
 use version;
 use Net::Jabber;
 use Time::HiRes;
+use Sys::Hostname;
 use Log::Log4perl qw(:easy);
 #use Data::Dumper; #For testing only.
 
@@ -39,6 +40,9 @@ has 'conference_server'   => (isa => Str, is => 'rw');
 has 'username'            => (isa => Str, is => 'rw');
 has 'password'            => (isa => Str, is => 'rw');
 has 'alias'               => (isa => Str, is => 'rw', default => sub{'net_jabber_bot'});
+# Resource defaults to alias_hostname_pid
+has 'resource'            => (isa => Str, lazy => 1, is => 'rw', default => sub{shift->alias . "_" . hostname . "_" . $$});
+#has 'resource'            => (isa => Str, lazy => 1, is => 'rw', default => sub{shift->alias});
 has 'message_function'    => (isa => Maybe[CodeRef], is => 'rw', default => sub{undef});
 has 'background_function' => (isa => Maybe[CodeRef], is => 'rw', default => sub{undef});
 has 'loop_sleep_time'     => (isa => PosNum, is => 'rw', default => 5);
@@ -87,11 +91,11 @@ Net::Jabber::Bot - Automated Bot creation with safeties
 
 =head1 VERSION
 
-Version 2.1.4
+Version 2.1.5
 
 =cut
 
-our $VERSION = '2.1.4';
+our $VERSION = '2.1.5';
 
 =head1 SYNOPSIS
 
@@ -357,10 +361,11 @@ sub _init_jabber {
 
     if(!defined $status) {
        ERROR("ERROR:  Jabber server is down or connection was not allowed: $!");
-       return;
+       die("Jabber server is down or connection was not allowed: $!");
     }
 
-    DEBUG("Logging in... as user " . $self->username . " / " . $self->alias);
+    DEBUG("Logging in... as user " . $self->username . " / " . $self->resource);
+    DEBUG("PW: " . $self->password);
 
     my $sid = $connection->{SESSION}->{id};
     $connection->{STREAM}->{SIDS}->{$sid}->{hostname} = $self->server_host;
@@ -368,11 +373,11 @@ sub _init_jabber {
 
     my @auth_result = $connection->AuthSend(username => $self->username,
                                             password => $self->password,
-                                            resource => $self->alias,
+                                            resource => $self->resource,
                                             );
 
     if(!defined $auth_result[0] || $auth_result[0] ne "ok") {
-        ERROR("Authorization failed: for " . $self->username . " / " . $self->alias);
+        ERROR("Authorization failed: for " . $self->username . " / " . $self->resource);
         foreach my $result (@auth_result) {
             ERROR("$result");
         }
@@ -415,7 +420,6 @@ sub JoinForum {
     my $forum_name = shift;
 
     DEBUG("Joining $forum_name on " . $self->conference_server . " as " . $self->alias);
-#    $forum_name =~ s/ /\|/g; # Spaces into pipes for forum name
 
     $self->jabber_client->MUCJoin(room    => $forum_name,
                                   server => $self->conference_server,
@@ -610,8 +614,8 @@ sub _process_jabber_message {
 
     # Are these my own messages?
     if($self->ignore_self_messages ) { # TODO: || $self->safety_mode (this breaks tests in 06?)
-        my $bot_alias = $self->get_alias();
-        if(defined $resource && $bot_alias eq $resource) { # Ignore my own messages.
+        
+        if(defined $resource && $resource eq $self->resource) { # Ignore my own messages.
             DEBUG("Ignoring message from self...\n");
             return;
         }
@@ -652,18 +656,6 @@ sub _process_jabber_message {
     }
 }
 
-=item B<get_alias>
-
-Returns the alias name we are connected as or undef if we are not an object
-
-=cut
-
-sub get_alias {
-    my $self = shift;
-
-    return $self->alias;
-}
-
 =item B<get_responses>
 
     $bot->get_ident($forum_name);
@@ -691,21 +683,6 @@ sub get_responses {
 }
 
 
-# Supposed to send version requests to other user/resources. *** NOT WORKING YET ****
-sub _request_version {
-    my $self = shift;
-
-    my $iq = new Net::XMPP::IQ();
-    $iq->SetIQ(to=> 'todd.e.rinaldo@jabber.com/Shiva'
-           , from=> 'jabber.bot@mx-dev.jabber.com/jabber-Bot'
-           , id=>   'jcl_122'
-           , type=> 'get'
-          );
-    my $iqType = $iq->NewChild( 'jabber:iq:version' );
-    DEBUG("Sending IQ Message:" . $iq->GetXML());
-    $self->jabber_client->Send($iq)
-}
-
 =item B<_jabber_in_iq_message> - DO NOT CALL
 
 Called when the client receives new messages during Process of this type.
@@ -719,7 +696,7 @@ sub _jabber_in_iq_message {
     my $iq = shift;
 
     DEBUG("IQ Message:" . $iq->GetXML());
-#    my $from = $iq->GetFrom();DEBUG("From=$from");
+    my $from = $iq->GetFrom();
 #    my $type = $iq->GetType();DEBUG("Type=$type");
     my $query = $iq->GetQuery();#DEBUG("query=" . Dumper($query));
     my $xmlns = $query->GetXMLNS();DEBUG("xmlns=$xmlns");
@@ -727,22 +704,24 @@ sub _jabber_in_iq_message {
 
     # Respond to version requests with information about myself.
     if($xmlns eq "jabber:iq:version") {
-        $iqReply = $iq->Reply();
-        my $response = $iqReply->GetQuery();
-        $response->SetName($self->alias);
-        $response->SetVer("2.0.7");
-        $response->SetOS($^O);
+        # convert 5.010000 to 5.10.0
+        my $perl_version = $];
+        $perl_version =~ s/(\d{3})(?=\d)/$1./g; 
+        $perl_version =~ s/\.0+(\d)/.$1/;
+        
+        $self->jabber_client
+             ->VersionSend(to=> $from,
+                           name=>__PACKAGE__,
+                           ver=> $VERSION,
+                           os=> "Perl v$perl_version");
     } else { # Unknown request. Just ignore it.
         return;
     }
 
-    DEBUG("Reply: ", $iqReply->GetXML());
-    $self->jabber_client->Send($iqReply);
-
-#    $from = "" if(!defined $from);
-#    $type = "" if(!defined $type);
-#    $query = "" if(!defined $query);
-#    $xmlns = "" if(!defined $xmlns);
+    if($iqReply) {
+        DEBUG("Reply: ", $iqReply->GetXML());
+        $self->jabber_client->Send($iqReply);
+    }
 
 #    INFO("IQ from $from ($type). XMLNS: $xmlns");
 }
@@ -1181,8 +1160,7 @@ under the same terms as Perl itself.
 
 =cut
 
-# We aren't making the object immutable because we new the object once and only once...
-#__PACKAGE__->meta->make_immutable;
+__PACKAGE__->meta->make_immutable;
 no Moose;
 no MooseX::Types;
 1; # End of Net::Jabber::Bot

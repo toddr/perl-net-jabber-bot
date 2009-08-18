@@ -1,6 +1,6 @@
 --- #YAML:1.0
 name:               Net-Jabber-Bot
-version:            2.1.4
+version:            2.1.5
 abstract:           Automated Bot creation with safeties
 author:
     - Todd E Rinaldo <perl-net-jabber-bot@googlegroups.com>
@@ -21,6 +21,7 @@ requires:
     Moose:             0.82
     MooseX::Types:     0.12
     Net::Jabber:       2
+    Sys::Hostname      0
     Test::More:        0
     Test::NoWarnings:  0
     Time::HiRes:       0

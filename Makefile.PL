@@ -18,6 +18,7 @@ WriteMakefile(
         'version' => 0, # It comes with most dists, but might as well be explicit
         'Test::More' => 0,  # For testing
         'Test::NoWarnings' => 0,  # For testing
+        'Sys::Hostname' => 0, # For unique resource name per connection 
         'FindBin' => 0, # Find mock module
         'lib' => 0,  # add lib for Mock jabber module
     },

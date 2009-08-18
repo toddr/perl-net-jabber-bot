@@ -1,5 +1,11 @@
 Revision history for Net-Jabber-Bot
 
+2.1.5
+resource now unique per instance of bot based on alias_hostname_pid
+new dependency from core modules - Sys::Hostname
+__PACKAGE__->meta->make_immutable; for performance.
+
+
 2.1.4
 _process_jabber_message was failing to parse multiline strings - fixed
 Move to github - http://github.com/toddr/perl-net-jabber-bot
