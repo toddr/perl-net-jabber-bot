@@ -868,6 +868,9 @@ The master subroutine to send a message. Called either by the user, SendPersonal
 is call to call it directly when you do not feel like figuring you messaged you.
 Assures message size does not exceed a limit and chops it into pieces if need be.
 
+NOTE: non-printable characters (unicode included) will be stripped before sending to the server via:
+    s/[^[:print:]]+/./xmsg
+
 =cut
 
 sub SendJabberMessage {
@@ -957,7 +960,9 @@ sub _send_individual_message {
         return "Server is down.\n";
     }
 
-    $message_chunk =~ s/[^ -~\r\n]/./g; #Strip out anything that's not a printable character
+    # Strip out anything that's not a printable character
+    # Now with unicode support?
+    $message_chunk =~ s/[^[:print:]]+/./xmsg; 
 
     my $message_length = length($message_chunk);
     DEBUG("Sending message $yday-$hour-$messages_this_hour $message_length bytes to $recipient");
