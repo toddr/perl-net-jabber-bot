@@ -35,7 +35,8 @@ has 'forum_join_grace'    => (isa => PosNum, is => 'rw', default => 10);
 has 'server_host'         => (isa => Str, is => 'rw', lazy => 1, default => sub{shift->server });
 has 'server'              => (isa => Str, is => 'rw');
 has 'port'                => (isa => PosInt, is => 'rw', default => 5222);
-has 'tls'                 => (isa => Bool, is => 'rw');
+has 'tls'                 => (isa => Bool, is => 'rw', default => '0');
+has 'connection_type'     => (isa => Bool, is => 'rw', default => 'tcpip');
 has 'conference_server'   => (isa => Str, is => 'rw');
 has 'username'            => (isa => Str, is => 'rw');
 has 'password'            => (isa => Str, is => 'rw');
@@ -53,9 +54,9 @@ has 'from_full'           => (isa => Str, is => 'rw', default => sub{my $self = 
                                                                        $self->server .
                                                                        '/' .
                                                                        $self->alias});
+                                                                       
 
 has 'safety_mode'            => (isa => Bool, is => 'rw', default => 1, coerce => 1);
-has 'gtalk'                  => (isa => Bool, is => 'rw', default => 0, coerce => 1);
 has 'ignore_server_messages' => (isa => Bool, is => 'rw', default => 1, coerce => 1);
 has 'ignore_self_messages'   => (isa => Bool, is => 'rw', default => 1, coerce => 1);
 has 'forums_and_responses'   => (isa => HashRef[ArrayRef[Str]], is => 'rw'); # List of forums we're in and the strings we monitor for.
@@ -145,8 +146,9 @@ The object at present has the following enforced safeties as long as you do not 
     my $bot = Net::Jabber::Bot->new(
                                  server => 'host.domain.com' # Name of server when sending messages internally.
                                 , conference_server => 'conference.host.domain.com'
-                                , server_host => 'talk.domain.com', # used to specify what jabber server to connect to on connect?
-                                , tls => 0 # Used by gtalk. breaks if set elsewhere.
+                                , server_host => 'talk.domain.com' # used to specify what jabber server to connect to on connect?
+                                , tls => 0 # Used by gtalk (set to 1). 
+                                , connection_type => 'tcpip'
                                 , port => 522
                                 , username => 'username'
                                 , password => 'pasword'
@@ -161,7 +163,6 @@ The object at present has the following enforced safeties as long as you do not 
                                 , out_messages_per_second => 4
                                 , max_message_size => 1000
                                 , max_messages_per_hour => 100
-                                , gtalk => 0 # Default to off, 1 for on. needed now due to gtalk differences from std jabber server.
                             );
 
 
@@ -294,11 +295,6 @@ sub BUILD {
         sleep 30;
     } 
     
-    if($self->gtalk) { # Google settings we're auto-setting
-        $self->server_host('gmail.com');
-        $self->tls(1);
-    }
-
     # Message delay is inverse of out_messages_per_second
     $self->message_delay(1/$self->out_messages_per_second);
 
@@ -354,7 +350,8 @@ sub _init_jabber {
         hostname => $self->server,
         port => $self->port,
         tls => $self->tls,
-        connection_type => 'tcpip',
+        connectiontype => $self->connection_type,
+        componentname  => $self->server_host,
     );
 
     my $status = $connection->Connect(%client_connect_hash);
@@ -367,8 +364,9 @@ sub _init_jabber {
     DEBUG("Logging in... as user " . $self->username . " / " . $self->resource);
     DEBUG("PW: " . $self->password);
 
-    my $sid = $connection->{SESSION}->{id};
-    $connection->{STREAM}->{SIDS}->{$sid}->{hostname} = $self->server_host;
+# Moved into connect hash via 'componentname'
+#    my $sid = $connection->{SESSION}->{id};
+#    $connection->{STREAM}->{SIDS}->{$sid}->{hostname} = $self->server_host;
 
 
     my @auth_result = $connection->AuthSend(username => $self->username,
@@ -584,10 +582,11 @@ sub _process_jabber_message {
     my $reply_to = $from_full;
     $reply_to =~ s/\/.*$// if($type eq 'groupchat');
 
-    # Don't know exactly why but when a message comes from gtalk-web-interface, it works well, but if the message comes from Gtalk client, bot deads
-#   my $message_date_text;  eval { $message_date_text = $message->GetTimeStamp(); } ; # Eval is a really bad idea. we need to understand why this is failing.
+    # TODO: 
+    # Don't know exactly why but when a message comes from gtalk-web-interface, it works well, but if the message comes from Gtalk client, bot dies
+    #   my $message_date_text;  eval { $message_date_text = $message->GetTimeStamp(); } ; # Eval is a really bad idea. we need to understand why this is failing.
 
-#    my $message_date_text = $message->GetTimeStamp(); # Since we're not using the data, we'll turn this off since it crashes gtalk clients aparently?
+    #    my $message_date_text = $message->GetTimeStamp(); # Since we're not using the data, we'll turn this off since it crashes gtalk clients aparently?
     #    my $message_date = UnixDate($message_date_text, "%s") - 1*60*60; # Convert to EST from CST;
 
     # Ignore any messages within 10 seconds of start or join of that forum
@@ -965,7 +964,7 @@ sub _send_individual_message {
     $self->jabber_client->MessageSend(to => $recipient
                      , body => $message_chunk
                      , type => $message_type
-#                                        , from => $connection_hash{$obj_ID}{'from_full'}
+#                     , from => $connection_hash{$obj_ID}{'from_full'}
                      , subject => $subject
                      );
 

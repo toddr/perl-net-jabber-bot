@@ -4,7 +4,8 @@ Revision history for Net-Jabber-Bot
 resource now unique per instance of bot based on alias_hostname_pid
 new dependency from core modules - Sys::Hostname
 __PACKAGE__->meta->make_immutable; for performance.
-
+Removed gtalk option. Use tls => 1, server_host => 'gmail.com' instead.
+using 'componentname' in connect rather than after connection like we were hacking it in.
 
 2.1.4
 _process_jabber_message was failing to parse multiline strings - fixed
