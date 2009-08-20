@@ -36,7 +36,7 @@ has 'server_host'         => (isa => Str, is => 'rw', lazy => 1, default => sub{
 has 'server'              => (isa => Str, is => 'rw');
 has 'port'                => (isa => PosInt, is => 'rw', default => 5222);
 has 'tls'                 => (isa => Bool, is => 'rw', default => '0');
-has 'connection_type'     => (isa => Bool, is => 'rw', default => 'tcpip');
+has 'connection_type'     => (isa => Str, is => 'rw', default => 'tcpip');
 has 'conference_server'   => (isa => Str, is => 'rw');
 has 'username'            => (isa => Str, is => 'rw');
 has 'password'            => (isa => Str, is => 'rw');
