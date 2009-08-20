@@ -6,6 +6,8 @@ new dependency from core modules - Sys::Hostname
 __PACKAGE__->meta->make_immutable; for performance.
 Removed gtalk option. Use tls => 1, server_host => 'gmail.com' instead.
 using 'componentname' in connect rather than after connection like we were hacking it in.
+All non-printable characters stripped and replaced with '.' via [:printable:] regex
+Added documentation on minimal connect parameters now we have quite a few optionals.
 
 2.1.4
 _process_jabber_message was failing to parse multiline strings - fixed

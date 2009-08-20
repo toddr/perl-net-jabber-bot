@@ -143,11 +143,25 @@ The object at present has the following enforced safeties as long as you do not 
 
 =item B<new>
 
+Minimal: 
     my $bot = Net::Jabber::Bot->new(
-                                 server => 'host.domain.com' # Name of server when sending messages internally.
+                                  server => 'host.domain.com' # Name of server when sending messages internally.
+                                , conference_server => 'conference.host.domain.com'
+                                , port => 522
+                                , username => 'username'
+                                , password => 'pasword'
+                                , safety_mode => 1
+                                , message_function => \&new_bot_message
+                                , background_function => \&background_checks
+                                , forums_and_responses => \%forum_list
+                            );
+    
+All options:
+    my $bot = Net::Jabber::Bot->new(
+                                  server => 'host.domain.com' # Name of server when sending messages internally.
                                 , conference_server => 'conference.host.domain.com'
                                 , server_host => 'talk.domain.com' # used to specify what jabber server to connect to on connect?
-                                , tls => 0 # Used by gtalk (set to 1). 
+                                , tls => 0 # set to 1 for google 
                                 , connection_type => 'tcpip'
                                 , port => 522
                                 , username => 'username'
@@ -164,6 +178,8 @@ The object at present has the following enforced safeties as long as you do not 
                                 , max_message_size => 1000
                                 , max_messages_per_hour => 100
                             );
+
+
 
 
 Setup the object and connect to the server. Hash values are passed to new as a hash.
