@@ -198,6 +198,11 @@ Determines if the bot safety features are turned on and enforced. This mode is o
 
 Jabber server name
 
+=item B<server_host>
+
+Defaults to the same value set for 'server' above.
+This is where the bot initially connects. For google for instance, you should set this to 'gmail.com' 
+
 =item B<conference_server>
 
 conferencee server (usually conference.$server_name)
@@ -205,6 +210,12 @@ conferencee server (usually conference.$server_name)
 =item B<port>
 
 Defaults to 5222
+
+=item B<tls>
+Boolean value. defaults to 0. for google, it is know that this value must be 1 to work.  
+
+=item B<connection_type>
+defaults to 'tcpip' also takes 'http' 
 
 =item B<username>
 
