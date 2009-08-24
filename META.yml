@@ -1,6 +1,6 @@
 --- #YAML:1.0
 name:               Net-Jabber-Bot
-version:            2.1.5
+version:            2.1.6
 abstract:           Automated Bot creation with safeties
 author:
     - Todd E Rinaldo <perl-net-jabber-bot@googlegroups.com>

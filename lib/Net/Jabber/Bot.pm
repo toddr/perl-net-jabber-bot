@@ -92,11 +92,11 @@ Net::Jabber::Bot - Automated Bot creation with safeties
 
 =head1 VERSION
 
-Version 2.1.5
+Version 2.1.6
 
 =cut
 
-our $VERSION = '2.1.5';
+our $VERSION = '2.1.6';
 
 =head1 SYNOPSIS
 
@@ -284,7 +284,7 @@ Specify maximimum size a message can be before it's split and sent in pieces.
 
 default: 1,000,000
 
-safetey: 1,000
+safety: 1,000
 
 =item B<max_messages_per_hour>
 
@@ -292,7 +292,7 @@ Limits the number of messages per hour before we refuse to send them
 
 default: 125
 
-safetey: 166
+safety: 166
 
 =back
 
@@ -503,8 +503,10 @@ sub Start {
         eval {$self->Process($process_timeout)};
 
         if($@) { #Assume the connection is down...
+	    ERROR("Server error: $@");
             my $message = "Disconnected from " . $self->server . ":" . $self->port
                         . " as " . $self->username;
+
             ERROR("$message Reconnecting...");
             sleep 5; # TODO: Make re-connect time flexible somehow
             $self->ReconnectToServer();
@@ -616,7 +618,7 @@ sub _process_jabber_message {
     #    my $message_date_text = $message->GetTimeStamp(); # Since we're not using the data, we'll turn this off since it crashes gtalk clients aparently?
     #    my $message_date = UnixDate($message_date_text, "%s") - 1*60*60; # Convert to EST from CST;
 
-    # Ignore any messages within 10 seconds of start or join of that forum
+    # Ignore any messages within 'forum_join_grace' seconds of start or join of that forum
     my $grace_period = $self->forum_join_grace;
     my $time_now = time;
     if($self->connect_time > $time_now - $grace_period
