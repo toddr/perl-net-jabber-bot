@@ -357,11 +357,7 @@ sub _callback_maker {
 sub _init_jabber {
     my $self = shift;
 
-    # Determine if the object already exists and if not, create it.
-    DEBUG("new client object.");
-    if(!$self->jabber_client) {
-        $self->jabber_client(Net::Jabber::Client->new);
-    }
+    # Autocreate the jabber object (see has jabber_client)
     my $connection = $self->jabber_client;
 
     DEBUG("Set the call backs.");

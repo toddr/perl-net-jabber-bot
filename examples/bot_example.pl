@@ -49,7 +49,7 @@ my $bot = Net::Jabber::Bot->new(
                                 , ignore_self_messages => 1 # Usually you don't want to see your own messages
                                 , out_messages_per_second => 5 # Maximum messages allowed per second (server flood throttling)
                                 , max_message_size => 1000 # Maximum byte size of the message before we chop it into pieces
-                                , max_messages_per_hour => 1000 # Keep the bot from going out of control with noisy messages 
+                                , max_messages_per_hour => 1000 # Keep the bot from going out of control with noisy messages
                             );
 
 
