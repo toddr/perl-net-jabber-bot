@@ -12,8 +12,6 @@ use Net::Jabber;
 use Time::HiRes;
 use Sys::Hostname;
 use Log::Log4perl qw(:easy);
-#use Data::Dumper; #For testing only.
-
 
 coerce Bool, from Str,
     via {($_ =~ m/(^on$)|(^true$)/i) + 0}; # True if it's on or true. Otherwise false.
