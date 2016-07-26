@@ -34,6 +34,7 @@ has 'server_host'         => (isa => Str, is => 'rw', lazy => 1, default => sub{
 has 'server'              => (isa => Str, is => 'rw');
 has 'port'                => (isa => PosInt, is => 'rw', default => 5222);
 has 'tls'                 => (isa => Bool, is => 'rw', default => '0');
+has 'ssl_ca_path'         => (isa => Str, is => 'rw');
 has 'connection_type'     => (isa => Str, is => 'rw', default => 'tcpip');
 has 'conference_server'   => (isa => Str, is => 'rw');
 has 'username'            => (isa => Str, is => 'rw');
@@ -161,6 +162,7 @@ All options:
         conference_server       => 'conference.host.domain.com',
         server_host             => 'talk.domain.com', # used to specify what jabber server to connect to on connect?
         tls                     => 0,                    # set to 1 for google
+        ssl_ca_path             => '',  # path to your CA cert bundle
         connection_type         => 'tcpip',
         port                    => 522,
         username                => 'username',
@@ -211,6 +213,10 @@ Defaults to 5222
 =item B<tls>
 
 Boolean value. defaults to 0. for google, it is know that this value must be 1 to work.
+
+=item B<ssl_ca_path>
+
+The path to your CA cert bundle. This is passed on to XML::Stream eventually.
 
 =item B<connection_type>
 
@@ -372,6 +378,7 @@ sub _init_jabber {
         hostname => $self->server,
         port => $self->port,
         tls => $self->tls,
+        ssl_ca_path => $self->ssl_ca_path,
         connectiontype => $self->connection_type,
         componentname  => $self->server_host,
     );
