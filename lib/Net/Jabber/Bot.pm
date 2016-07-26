@@ -738,6 +738,12 @@ sub _jabber_in_iq_message {
     my $from = $iq->GetFrom();
 #    my $type = $iq->GetType();DEBUG("Type=$type");
     my $query = $iq->GetQuery();#DEBUG("query=" . Dumper($query));
+
+    if (!$query) {
+        DEBUG("iq->GetQuery() returned undef.");
+        return;
+    }
+
     my $xmlns = $query->GetXMLNS();DEBUG("xmlns=$xmlns");
     my $iqReply;
 
