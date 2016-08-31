@@ -1,5 +1,8 @@
 Revision history for Net-Jabber-Bot
 
+XXX
+Allow the user to specify the path to the CA cert bundle via the 'ssl_ca_path' parameter.
+
 2.1.6
 Spelling errors in documentation
 Display server error message when we think there was a disconnect event.
