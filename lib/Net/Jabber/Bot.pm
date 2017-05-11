@@ -799,6 +799,10 @@ sub _jabber_presence_message {
         INFO("Processed unsubscribe request from $from");
         return;
     }
+    
+    # Without explicitly setting a priority, XMPP::Protocol will store all JIDs with an empty
+    # priority under the same key rather than in an array. 
+    $presence->SetPriority(0) unless $presence->GetPriority();
 
     $self->jabber_client->PresenceDBParse($presence); # Since we are always an object just throw it into the db.
 
