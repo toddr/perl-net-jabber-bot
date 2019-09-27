@@ -12,6 +12,7 @@ use Net::Jabber;
 use Time::HiRes;
 use Sys::Hostname;
 use Log::Log4perl qw(:easy);
+use Mozilla::CA;
 
 coerce Bool, from Str,
     via {($_ =~ m/(^on$)|(^true$)/i) + 0}; # True if it's on or true. Otherwise false.
@@ -34,7 +35,7 @@ has 'server_host'         => (isa => Str, is => 'rw', lazy => 1, default => sub{
 has 'server'              => (isa => Str, is => 'rw');
 has 'port'                => (isa => PosInt, is => 'rw', default => 5222);
 has 'tls'                 => (isa => Bool, is => 'rw', default => '0');
-has 'ssl_ca_path'         => (isa => Str, is => 'rw');
+has 'ssl_ca_path'         => (isa => Str, is => 'rw', default => Mozilla::CA::SSL_ca_file());
 has 'connection_type'     => (isa => Str, is => 'rw', default => 'tcpip');
 has 'conference_server'   => (isa => Str, is => 'rw');
 has 'username'            => (isa => Str, is => 'rw');
