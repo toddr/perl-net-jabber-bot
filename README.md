@@ -1,3 +1,5 @@
+[![](https://github.com/toddr/perl-net-jabber-bot/workflows/linux/badge.svg)](https://github.com/toddr/perl-net-jabber-bot/actions) [![](https://github.com/toddr/perl-net-jabber-bot/workflows/macos/badge.svg)](https://github.com/toddr/perl-net-jabber-bot/actions) [![](https://github.com/toddr/perl-net-jabber-bot/workflows/windows/badge.svg)](https://github.com/toddr/perl-net-jabber-bot/actions)
+
 # NAME
 
 Net::Jabber::Bot - Automated Bot creation with safeties
