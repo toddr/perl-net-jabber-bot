@@ -1195,17 +1195,13 @@ L<http://annocpan.org/dist/Net-Jabber-Bot>
 
 L<http://cpanratings.perl.org/d/Net-Jabber-Bot>
 
-=item * Search CPAN
+=item * Metacpan
 
-L<http://search.cpan.org/dist/Net-Jabber-Bot>
+L<https://metacpan.org/pod/Net::Jabber::Bot>
 
-=item * Project homepage
+=item * Github
 
-L<http://code.google.com/p/perl-net-jabber-bot/>
-
-=item * Google Issue Tracker (reporting bugs)
-
-L<http://code.google.com/p/perl-net-jabber-bot/issues/entry>
+L<https://github.com/toddr/perl-net-jabber-bot>
 
 =back
 

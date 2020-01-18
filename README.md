@@ -356,17 +356,13 @@ You can also look for information at:
 
     [http://cpanratings.perl.org/d/Net-Jabber-Bot](http://cpanratings.perl.org/d/Net-Jabber-Bot)
 
-- Search CPAN
+- Metacpan
 
-    [http://search.cpan.org/dist/Net-Jabber-Bot](http://search.cpan.org/dist/Net-Jabber-Bot)
+    [https://metacpan.org/pod/Net::Jabber::Bot](https://metacpan.org/pod/Net::Jabber::Bot)
 
-- Project homepage
+- Github
 
-    [http://code.google.com/p/perl-net-jabber-bot/](http://code.google.com/p/perl-net-jabber-bot/)
-
-- Google Issue Tracker (reporting bugs)
-
-    [http://code.google.com/p/perl-net-jabber-bot/issues/entry](http://code.google.com/p/perl-net-jabber-bot/issues/entry)
+    [https://github.com/toddr/perl-net-jabber-bot](https://github.com/toddr/perl-net-jabber-bot)
 
 # ACKNOWLEDGEMENTS
 
