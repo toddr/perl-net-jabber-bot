@@ -1,0 +1,35 @@
+name: macos
+
+on:
+  push:
+    branches:
+      - '*'
+    tags-ignore:
+      - '*'
+  pull_request:
+
+jobs:
+  perl:
+    env:
+      PERL_USE_UNSAFE_INC: 0
+      AUTHOR_TESTING: 0
+      AUTOMATED_TESTING: 1
+      RELEASE_TESTING: 1
+
+    runs-on: macOS-latest
+
+    strategy:
+      fail-fast: false
+      matrix:
+        perl-version: [latest]
+
+    steps:
+      - uses: actions/checkout@v1
+      - name: perl -V
+        run: perl -V
+      - name: Install Dependencies
+        run: cpan -T Module::Install Log::Log4perl Moose MooseX::Types Authen::SASL XML::Stream LWP::Online YAML::Tiny Net::Jabber Mozilla::CA Sys::Hostname Test::NoWarnings Time::HiRes Test::Pod::Coverage Test::Pod
+      - name: Makefile.PL
+        run: perl Makefile.PL
+      - name: make test
+        run: make test
