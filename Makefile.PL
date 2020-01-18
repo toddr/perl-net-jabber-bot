@@ -35,7 +35,7 @@ WriteMakefile(
         resources => {
             license => 'http://dev.perl.org/licenses/',
             homepage => 'http://wiki.github.com/toddr/perl-net-jabber-bot',
-            bugtracker => 'https://github.com/toddr/perl-net-jabber-bot/issues';
+            bugtracker => 'https://github.com/toddr/perl-net-jabber-bot/issues',
             repository => 'http://github.com/toddr/perl-net-jabber-bot/tree/master',
 #            MailingList => 'http://groups.google.com/group/perl-net-jabber-bot',
         },
