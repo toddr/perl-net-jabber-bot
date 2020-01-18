@@ -12,6 +12,7 @@ use Net::Jabber;
 use Time::HiRes;
 use Sys::Hostname;
 use Log::Log4perl qw(:easy);
+use Mozilla::CA;
 
 coerce Bool, from Str,
     via {($_ =~ m/(^on$)|(^true$)/i) + 0}; # True if it's on or true. Otherwise false.
@@ -34,26 +35,25 @@ has 'server_host'         => (isa => Str, is => 'rw', lazy => 1, default => sub{
 has 'server'              => (isa => Str, is => 'rw');
 has 'port'                => (isa => PosInt, is => 'rw', default => 5222);
 has 'tls'                 => (isa => Bool, is => 'rw', default => '0');
-has 'ssl_ca_path'         => (isa => Str, is => 'rw');
+has 'ssl_ca_path'         => (isa => Str, is => 'rw', default => Mozilla::CA::SSL_ca_file());
 has 'ssl_verify'          => (isa => Bool, is => 'rw', default => '1');
 has 'connection_type'     => (isa => Str, is => 'rw', default => 'tcpip');
 has 'conference_server'   => (isa => Str, is => 'rw');
 has 'username'            => (isa => Str, is => 'rw');
 has 'password'            => (isa => Str, is => 'rw');
-has 'alias'               => (isa => Str, is => 'rw', default => sub{'net_jabber_bot'});
+has 'alias'               => (isa => Str, lazy => 1, is => 'rw', default => 'net_jabber_bot');
 # Resource defaults to alias_hostname_pid
 has 'resource'            => (isa => Str, lazy => 1, is => 'rw', default => sub{shift->alias . "_" . hostname . "_" . $$});
-#has 'resource'            => (isa => Str, lazy => 1, is => 'rw', default => sub{shift->alias});
 has 'message_function'    => (isa => Maybe[CodeRef], is => 'rw', default => sub{undef});
 has 'background_function' => (isa => Maybe[CodeRef], is => 'rw', default => sub{undef});
 has 'loop_sleep_time'     => (isa => PosNum, is => 'rw', default => 5);
 has 'process_timeout'     => (isa => PosNum, is => 'rw', default => 5);
-has 'from_full'           => (isa => Str, is => 'rw', default => sub{my $self = shift;
-                                                                       $self->username .
+has 'from_full'           => (isa => Str, lazy => 1, is => 'rw', default => sub{my $self = shift;
+                                                                       $self->username || ''  .
                                                                        '@' .
-                                                                       $self->server .
+                                                                       $self->server || '' .
                                                                        '/' .
-                                                                       $self->alias});
+                                                                       $self->alias || '' });
 
 has 'safety_mode'            => (isa => Bool, is => 'rw', default => 1, coerce => 1);
 has 'ignore_server_messages' => (isa => Bool, is => 'rw', default => 1, coerce => 1);

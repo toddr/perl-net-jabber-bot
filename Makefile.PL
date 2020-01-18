@@ -12,6 +12,7 @@ WriteMakefile(
     PREREQ_PM => {
         'Moose' => 0.82,  # Object Base
         'MooseX::Types' => 0.12, # New variable types
+        'Mozilla::CA' => 0, # SSL Cert support.
         'Time::HiRes' => 0, # Partial second sleeping
         'Net::Jabber' => 2.0,  # The whole thing is based on Net::Jabber. 
         'Log::Log4perl' => 0,  # We use log4perl. not sure how bad this'll screw people over... should consider removal later or make it optional
