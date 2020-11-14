@@ -1016,9 +1016,9 @@ sub _send_individual_message {
         return "Server is down.\n";
     }
 
-    # Strip out anything that's not a printable character
+    # Strip out anything that's not a printable character except new line, we want to be able to send multiline message, aren't we?
     # Now with unicode support?
-    $message_chunk =~ s/[^[:print:]]+/./xmsg; 
+    $message_chunk =~ s/[^[\n|\r|\r\n|:print:]]+/./xmsg;
 
     my $message_length = length($message_chunk);
     DEBUG("Sending message $yday-$hour-$messages_this_hour $message_length bytes to $recipient");
